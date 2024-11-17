@@ -64,4 +64,4 @@ Spotify Web API enables the creation of applications that can interact with Spot
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the GPL License. See the [LICENSE](LICENSE) file for details.

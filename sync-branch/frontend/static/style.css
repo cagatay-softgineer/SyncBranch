@@ -1,0 +1,440 @@
+/* Importing fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Music&family=Noto+Sans+Runic&family=Skranji&display=swap');
+/* General styling for body */
+html {
+    overflow-x: hidden !important;
+    margin: 0;
+}
+
+body {
+    font-family: "Noto Sans Runic", sans-serif;
+    background-image: url('/static/yggdrasil-background.webp'); /* Add your background image here */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh; /* Ensure body takes up the full height of the viewport */
+    display: flex;
+    flex-direction: column; /* Flexbox layout */
+    animation: fadeIn 2s ease-in-out; /* Apply a fade-in animation when the page loads */
+    overflow-x: hidden !important;
+}
+
+/* Adding fade-in effect */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Flexbox container for content */
+.content-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+/* Centering the content and adding a blur effect */
+.content {
+    background-color: rgba(5, 3, 25, 0.6); /* Dark semi-transparent background */
+    padding: 20px 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(5, 3, 25, 0.5);
+    backdrop-filter: blur(10px); /* Background blur */
+    max-width: 800px;
+    padding-bottom: 15svh;
+    width: 90%; /* Full width on small screens */
+    box-sizing: border-box;
+    text-align: center;
+    color: #f6f6f6; /* Soft white text for readability */
+    flex-grow: 1; /* Allow content to grow and push footer down */
+    margin: auto; /* Center content vertically */
+    animation: slideUp 1.5s ease-in-out; /* Content slides up when loaded */
+}
+
+/* Adding slide-up effect */
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.content-audio-features {
+    background-color: rgba(0, 0, 0, 0.6); /* Dark semi-transparent background */
+    padding: 20px 40px;
+    padding-bottom: 15svh;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px); /* Background blur */
+    max-width: 1800px; /* Increased width for table display */
+    width: 95%; /* Full width on small screens */
+    box-sizing: border-box;
+    text-align: center;
+    color: #e0d4b3; /* Soft golden text for readability */
+    flex-grow: 1; /* Allow content to grow and push footer down */
+    margin: 40px auto; /* Center content vertically with top and bottom margin */
+}
+
+/* Table styling */
+table {
+    width: 100%; /* Full width */
+    border-collapse: collapse;
+    margin: 20px 0; /* Space above and below the table */
+}
+
+th, td {
+    border: 1px solid #555; /* Darker border for contrast */
+    padding: 12px 15px; /* Consistent padding */
+    text-align: left;
+    color: #e0d4b3; /* Soft golden text for readability */
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+}
+
+th {
+    background-color: #556b2f !important; /* Earthy green background for header */
+    color: rgba(246, 246, 246); /* White text for header */
+}
+
+tr:nth-child(odd) {
+    background-color: rgba(0, 0, 0, 0.2) !important; /* Slightly different background for even rows */
+}
+tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.2) !important; /* Slightly different background for even rows */
+}
+
+tr:hover {
+    background-color: #3c3c3c; /* Darker background on hover */
+    color: #ffffff; /* Change text color for better readability on hover */
+}
+
+/* Footer styling */
+footer {
+    background-color: rgba(41, 41, 41,1);
+    color: #f6f6f6;
+    padding: 0px;
+    text-align: center;
+    width: 100%; /* Full width for the footer */
+    max-height: 10svh;
+    position: fixed;
+    bottom: 0;
+    margin-top: auto; /* Push the footer to the bottom when content is shorter than the screen */
+}
+
+/* GitHub link in the footer with animation */
+footer a img {
+    margin-top: 10px !important;
+    display: inline-flex !important;
+    vertical-align: middle !important;
+}
+
+footer a img:hover {
+    transform: scale(1.2); /* Zoom in on hover */
+}
+
+/* Styling for headings */
+h1, h2 {
+    font-family: "Noto Sans Runic", sans-serif;
+    color: #FF22FF; /* Bold neon pink */
+    letter-spacing: 1px;
+    animation: fadeInText 1.5s ease-in-out forwards;
+}
+
+@keyframes fadeInText {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Styling for navigation links with smooth transitions */
+nav a {
+    font-size: 1.2em;
+    color: #84fbfb; /* Light blue */
+    text-decoration: none;
+    margin: 0 15px;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+nav a:hover {
+    color: #6a11cb; /* Deep purple on hover */
+    border-bottom: 2px solid #6a11cb;
+    transform: scale(1.1); /* Slight zoom effect on hover */
+}
+
+/* Button styling with animation */
+form button {
+    background-color: #1a2980; /* Blue */
+    color: #f6f6f6; /* White text */
+    border: 2px solid #84fbfb; /* Light blue border */
+    padding: 12px 24px;
+    font-size: 1.1em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transitions */
+    animation: fadeIn 1s ease-in-out forwards;
+}
+
+form button:hover {
+    background-color: #84fbfb; /* Light blue on hover */
+    transform: scale(1.1); /* Slightly enlarge the button on hover */
+    box-shadow: 0 4px 12px rgba(5, 3, 25, 0.2); /* Add shadow on hover */
+}
+
+/* Styling for images */
+img {
+    max-width: 100%; /* Ensure images do not overflow their container */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    margin: 10px 0; /* Space around the image */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions for hover effects */
+}
+
+/* Hover effect for images */
+img:hover {
+    transform: scale(1.03); /* Slightly enlarge the image on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
+}
+
+/* Specific styling for user profile images */
+.user-card img {
+    border-radius: 50%; /* Make profile images circular */
+    width: 80px; /* Fixed size for profile images */
+    height: 80px; /* Fixed size for profile images */
+    margin-right: 15px; /* Space between image and text */
+    object-fit: cover; /* Ensure the image fits within its container */
+}
+
+/* Styling for paragraph text */
+p {
+    color: #e0d4b3; /* Soft golden text for readability */
+    line-height: 1.6; /* Increased line spacing for better readability */
+    margin: 15px 0; /* Space above and below the paragraph */
+    font-size: 1.1em; /* Slightly larger font size for better visibility */
+}
+
+/* Styling for emphasized text */
+strong {
+    color: #6b8e23; /* Earthy green color to highlight strong text */
+    font-weight: bold; /* Ensure strong text is bold */
+}
+
+/* Container for all user cards */
+.match-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+/* Styling for each user card */
+.match-card {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    padding: 15px;
+    width: 200px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hover effect for user cards */
+.match-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Profile picture within user cards */
+.match-card img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    object-fit: cover;
+}
+
+/* User information styling */
+.match-info {
+    color: #e0d4b3; /* Soft golden text */
+}
+
+.match-info p {
+    margin: 5px 0;
+}
+
+/* Remove default link styles and add custom styling for the entire card link */
+.match-card a {
+    display: block; /* Make the entire card clickable */
+    color: inherit; /* Inherit text color from parent (soft golden text) */
+    text-decoration: none; /* Remove underline */
+    border-radius: 10px; /* Match the card's border radius */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transition */
+}
+
+/* Hover effect for the link */
+.match-card a:hover {
+    background-color: rgba(107, 142, 35, 0.3); /* Light green overlay on hover */
+    transform: scale(1.03); /* Slight scale on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+}
+
+/* Adjustments for text within the link */
+.match-card a .match-info p {
+    margin: 5px 0;
+    color: #e0d4b3; /* Ensure text remains soft golden */
+}
+
+
+/* Remove default link styles and add custom styling for the entire card link */
+a {
+    display: block; /* Make the entire card clickable */
+    color: inherit; /* Inherit text color from parent (soft golden text) */
+    text-decoration: none; /* Remove underline */
+    border-radius: 10px; /* Match the card's border radius */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transition */
+}
+
+/* Hover effect for the link */
+a:hover {
+    background-color: rgba(107, 142, 35, 0.3); /* Light green overlay on hover */
+    transform: scale(1.03); /* Slight scale on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+}
+
+/* Adjustments for text within the link */
+a p {
+    margin: 5px 0;
+    color: #e0d4b3; /* Ensure text remains soft golden */
+}
+
+.button-container {
+    display: grid;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.button {
+    background-color: rgba(107, 142, 35,0.5);
+    color: #f6f6f6;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.button:hover {
+    background-color: rgba(85, 107, 47, 0.5);
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+
+.pagination {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.current-page {
+    background-color: #b3b3b3;
+    cursor: default;
+}
+
+
+.search-bar {
+    padding: 10px;
+    width: 60%;
+    max-width: 400px;
+    font-size: 1em;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin: 20px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+
+/* Conditional styling for track popularity */
+.popularity-low { background-color: rgba(247, 198, 199,0.4); }
+.popularity-medium { background-color: rgba(255, 244, 179,0.4); }
+.popularity-high { background-color: rgba(198, 247, 198,0.4); }
+.popularity-top { background-color: rgba(154, 223, 135,0.4); font-weight: bold; }
+
+
+.chart-img {
+    max-width: 100%; /* Ensure images do not overflow their container */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    margin: 10px 0; /* Space around the image */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions for hover effects */
+}
+
+/* Hover effect for images */
+.chart-img:hover {
+    transform: scale(1.0); /* Slightly enlarge the image on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
+}
+
+.artist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+}
+.artist-card {
+    background-color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+}
+.artist-card:hover {
+    transform: translateY(-5px);
+    background-color: #444;
+}
+.artist-card a {
+    color: #f6f6f6;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+/* Fixed logo in the top-left corner */
+.logo-container {
+    position: fixed;
+    top: 10px; /* Adjust as needed */
+    left: 10px; /* Adjust as needed */
+    z-index: 1000; /* Ensures it's always on top */
+}
+
+.logo-container img {
+    width: 100px; /* Adjust size */
+    height: auto;
+    background-color: rgba(5, 3, 25, 0.6); /* Dark semi-transparent background */
+    padding: 5px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(5, 3, 25, 0.5);
+    backdrop-filter: blur(10px); /* Background blur */
+    box-sizing: border-box;
+    text-align: center;
+    flex-grow: 1; /* Allow content to grow and push footer down */
+    animation: slideUp 1.5s ease-in-out; /* Content slides up when loaded */
+}

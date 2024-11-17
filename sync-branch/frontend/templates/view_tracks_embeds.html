@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/x-icon" href="/static/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
+    <title>Tracks</title>
+</head>
+<body>
+    <div class="content-container">
+        <div class="content">
+            <h1>Tracks</h1>
+
+            <!-- Search Form -->
+            <form method="get" action="{{ url_for('show_tracks_audio_features') }}">
+                <input type="text" name="search" placeholder="Search by track name or artist name..." value="{{ search_query }}" class="search-bar">
+                <button type="submit" class="button">Search</button>
+            </form>
+
+            <!-- Display all track embeds -->
+            <div class="embeds">
+                {% for embed in embeds %}
+                    <div class="embed-container">
+                        {{ embed | safe }}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('show_tracks_audio_features', page=1, search=search_query) }}" class="button">First</a>
+                    <a href="{{ url_for('show_tracks_audio_features', page=page-1, search=search_query) }}" class="button">Previous</a>
+                {% endif %}
+    
+                {% for p in range(page - 2, page + 3) %}
+                    {% if 1 <= p <= total_pages %}
+                        {% if p == page %}
+                            <span class="button current-page">{{ p }}</span>
+                        {% else %}
+                            <a href="{{ url_for('show_tracks_audio_features', page=p, search=search_query) }}" class="button">{{ p }}</a>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+    
+                {% if page < total_pages %}
+                    <a href="{{ url_for('show_tracks_audio_features', page=page+1, search=search_query) }}" class="button">Next</a>
+                    <a href="{{ url_for('show_tracks_audio_features', page=total_pages, search=search_query) }}" class="button">Last</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <footer>
+        <p>© 2024 Yggbranch.dev - Explore your music identity through SyncBranch
+            <a href="https://github.com/cagatay-softgineer/SyncBranch" target="_blank">
+                <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo" width="30" height="30">
+            </a>
+        </p>    
+    </footer>
+    <div class="logo-container">
+        <a href="/"> 
+        <img src="/static/icons/logo.png" alt="Project Logo">
+        </a>
+    </div>
+</body>
+</html>

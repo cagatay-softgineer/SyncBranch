@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/x-icon" href="/static/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
+    <title>{{ user_info.display_name }}'s Profile</title>
+
+    <style>
+        .content {
+            max-width: 1200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content-container">
+        <div class="content">
+            <h1>{{ user_info.display_name }}'s Profile</h1>
+            <div class="user-card">
+                <img src="{{ user_info.profile_image_url }}" alt="Profile Picture">
+                <p><strong>Personal Type:</strong> {{ user_info.personal_type }}</p>
+                <p>{{ user_info.type_description }}</p>
+            </div>
+
+            <h2>Top 5 Matches</h2>
+            <div class="match-cards">
+                {% for match in top_matches %}
+                    <div class="match-card">
+                        <a href="{{ url_for('user_profile', user_id=match.match_user_id) }}">
+                            <img src="{{ match.match_user_image }}" alt="{{ match.match_user_name }}'s Profile Picture">
+                            <div class="match-info">
+                                <p><strong>{{ match.match_user_name }}</strong></p>
+                                <p>Match Rate: {{ match.final_match_rate_percentage | round(2) }}%</p>
+                                <p>Personal Type: <strong>{{ match.match_user_type }}</strong></p>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <h2>Top 50 Matches</h2>
+            <div class="match-cards">
+                {% for match in all_matches %}
+                    <div class="match-card">
+                        <a href="{{ url_for('user_profile', user_id=match.match_user_id) }}">
+                            <img src="{{ match.match_user_image }}" alt="{{ match.match_user_name }}'s Profile Picture">
+                            <div class="match-info">
+                                <p><strong>{{ match.match_user_name }}</strong></p>
+                                <p>Match Rate: {{ match.final_match_rate_percentage | round(2) }}%</p>
+                                <p>Personal Type: <strong>{{ match.match_user_type }}</strong></p>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <footer>
+        <p>© 2024 Yggbranch.dev - Explore your music identity through SyncBranch
+            <a href="https://github.com/cagatay-softgineer/SyncBranch" target="_blank">
+                <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo" width="30" height="30">
+            </a>
+        </p>    
+    </footer>
+    <div class="logo-container">
+        <a href="/"> 
+        <img src="/static/icons/logo.png" alt="Project Logo">
+        </a>
+    </div>
+</body>
+</html>

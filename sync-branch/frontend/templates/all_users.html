@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/x-icon" href="/static/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
+    <title>All Users</title>
+    
+</head>
+<body>
+    <div class="content-container">
+        <div class="content">
+            <h1>All Users</h1>
+            <div class="match-cards">
+                {% for user in users %}
+                    <div class="match-card">
+                        <a href="{{ url_for('user_profile', user_id=user.user_id) }}">
+                            <img src="{{ user.profile_image_url or '/static/icons/default_user.png' }}" alt="{{ user.display_name }}'s Profile Picture">
+                            <div class="match-info">
+                                <p><strong>{{ user.display_name }}</strong></p>
+                                <p>Personal Type: {{ user.personal_type }}</p>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <footer>
+        <p>© 2024 Yggbranch.dev - Explore your music identity through SyncBranch
+            <a href="https://github.com/cagatay-softgineer/SyncBranch" target="_blank">
+                <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo" width="30" height="30">
+            </a>
+        </p>    
+    </footer>
+
+    <div class="logo-container">
+        <a href="/"> 
+        <img src="/static/icons/logo.png" alt="Project Logo">
+        </a>
+    </div>
+</body>
+</html>

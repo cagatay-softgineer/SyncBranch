@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/x-icon" href="/static/icons/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Music&family=Noto+Sans+Runic&family=Skranji&display=swap" rel="stylesheet">
+    <title>{{ artist_name if artist_name else 'Overall' }} Genre Distribution</title>
+    
+</head>
+<body>
+    <div class="content-container">
+        <div class="content main-content">
+    <h1>{{ artist_name if artist_name else 'Overall' }}</h1>
+    <h2>Total Tracks: {{ total_tracks }}</h2>
+
+    <div>
+        <h3>{{ artist_name if artist_name else 'Overall' }} Genre Distribution</h3>
+        <img class="chart-img" src="data:image/png;base64,{{ genre_bar_url }}" alt="Genre Distribution Bar Chart">
+    </div>
+</div>
+</div>
+
+<footer>
+    <p>© 2024 Yggbranch.dev - Explore your music identity through SyncBranch
+        <a href="https://github.com/cagatay-softgineer/SyncBranch" target="_blank">
+            <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo" width="30" height="30">
+        </a>
+    </p>    
+</footer>
+
+<script>
+    document.body.style.overflowX = 'hidden';
+    document.documentElement.style.overflowX = 'hidden'; // For the HTML element
+</script>
+<div class="logo-container">
+    <a href="/"> 
+    <img src="/static/icons/logo.png" alt="Project Logo">
+    </a>
+</div>
+</body>
+</html>

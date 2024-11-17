@@ -1,0 +1,188 @@
+/* Importing fonts */
+@import url('link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Skranji:wght@400;700&display=swap"');
+
+/* General styling for body */
+body {
+    font-family: 'Skranji', serif; /* Cinzel for body text to keep readability */
+    background-image: url('yggdrasil-background.webp'); /* Background image */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh; /* Ensure body takes up the full height of the viewport */
+    display: flex;
+    flex-direction: column; /* Flexbox layout */
+    animation: fadeIn 2s ease-in-out; /* Apply a fade-in animation when the page loads */
+    overflow-x: hidden;
+}
+
+/* Adding fade-in effect */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Flexbox container for content */
+.content-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+/* Centering the content and adding a blur effect */
+.content {
+    background-color: rgba(5, 3, 25, 0.6); /* Dark semi-transparent background */
+    padding: 20px 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(5, 3, 25, 0.5);
+    backdrop-filter: blur(10px); /* Background blur */
+    max-width: 800px;
+    width: 90%; /* Full width on small screens */
+    box-sizing: border-box;
+    text-align: center;
+    color: #f6f6f6; /* Soft white text for readability */
+    flex-grow: 1; /* Allow content to grow and push footer down */
+    margin: auto; /* Center content vertically */
+    animation: slideUp 1.5s ease-in-out; /* Content slides up when loaded */
+}
+
+/* Adding slide-up effect */
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Drop Cap for the first letter of each section 
+p::first-letter {
+    font-size: 2.8em;
+    font-family: 'Cinzel', serif; /* Keep Cinzel for readability 
+    color: #ff22ff; /* Highlight the first letter in neon pink
+    font-weight: bold;
+    float: left;
+    margin-right: 5px;
+    line-height: 1;
+}*/
+
+/* Header and Titles in Noto Sans Runic */
+h1, h2 {
+    font-family: 'Skranji', serif; /* Use Noto Sans Runic for headers */
+    color: #FF22FF; /* Bold neon pink */
+    letter-spacing: 1px;
+    animation: fadeInText 1.5s ease-in-out forwards;
+}
+
+/* Text fade-in effect */
+@keyframes fadeInText {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Styling for navigation links with smooth transitions */
+nav a {
+    font-size: 1.2em;
+    color: #84fbfb; /* Light blue */
+    text-decoration: none;
+    margin: 0 15px;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+nav a:hover {
+    color: #6a11cb; /* Deep purple on hover */
+    border-bottom: 2px solid #6a11cb;
+    transform: scale(1.1); /* Slight zoom effect on hover */
+}
+
+/* Button styling with animation */
+form button {
+    background-color: #1a2980; /* Blue */
+    color: #f6f6f6; /* White text */
+    border: 2px solid #84fbfb; /* Light blue border */
+    padding: 12px 24px;
+    font-size: 1.1em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transitions */
+    animation: fadeIn 1s ease-in-out forwards;
+}
+
+form button:hover {
+    background-color: #84fbfb; /* Light blue on hover */
+    transform: scale(1.1); /* Slightly enlarge the button on hover */
+    box-shadow: 0 4px 12px rgba(5, 3, 25, 0.2); /* Add shadow on hover */
+}
+
+/* Footer styling */
+footer {
+    background-color: #292929;
+    color: #f6f6f6;
+    padding: 0px;
+    text-align: center;
+    width: 100%; /* Full width for the footer */
+    position: relative;
+    bottom: 0;
+    margin-top: auto; /* Push the footer to the bottom when content is shorter than the screen */
+}
+
+/* GitHub link in the footer with animation */
+footer a img {
+    margin-top: 10px;
+    display: inline-block;
+    vertical-align: middle;
+    transition: transform 0.3s ease;
+}
+
+footer a img:hover {
+    transform: scale(1.2); /* Zoom in on hover */
+}
+
+
+/* Technologies Section */
+#technologies {
+    background-color: rgba(46, 13, 47, 0.8); /* Dark purple background */
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+/* Each technology item */
+.tech-item {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+/* Styling for technology titles */
+.tech-item h3 {
+    color: #84fbfb; /* Light blue */
+    font-size: 0.8em;
+    margin-bottom: 12px;
+    margin-right: 8px;
+    text-transform: uppercase; /* Uppercase styling for titles */
+    display: flex;
+    align-items: center;
+}
+
+.tech-item h3 img {
+    margin-right: 10px; /* Spacing between icon and text */
+}
+
+/* Styling for technology descriptions */
+.tech-item p {
+    color: #f6f6f6; /* Light text for description */
+}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/x-icon" href="/static/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
+    <title>User Personal Type Details</title>
+    
+</head>
+<body>
+    <div class="content">
+        <h1>{{ user_info['display_name'] }}'s Personal Type</h1>
+        <div class="user-details">
+            <img src="{{ user_info['profile_image_url'] }}" alt="{{ user_info['display_name'] }}'s Image" width="300" height="300">
+            <h2>Personal Type: {{ user_info['personal_type'] }}</h2>
+            <p><strong>Description:</strong> {{ user_info['type_description'] }}</p>
+            <p><strong>High Features:</strong> {{ user_info['feature_profile_high'] }}</p>
+            <p><strong>Medium Features:</strong> {{ user_info['feature_profile_medium'] }}</p>
+            <p><strong>Low Features:</strong> {{ user_info['feature_profile_low'] }}</p>
+            <p><strong>Playlist Count:</strong> {{ user_info['playlist_count'] }}</p>
+            <p><strong>Total Tracks:</strong> {{ user_info['total_tracks'] }}</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2024 Yggbranch.dev - Explore your music identity through SyncBranch
+            <a href="https://github.com/cagatay-softgineer/SyncBranch" target="_blank">
+                <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo" width="30" height="30">
+            </a>
+        </p>    
+    </footer>
+    <div class="logo-container">
+        <a href="/"> 
+        <img src="/static/icons/logo.png" alt="Project Logo">
+        </a>
+    </div>
+</body>
+</html>

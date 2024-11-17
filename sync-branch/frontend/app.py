@@ -207,7 +207,7 @@ def artist_genre_distribution():
             genre_query = """
                 SELECT TG."Track Genre", COUNT(*) AS TrackCount
                 FROM TracksAudioFeatures TG
-                JOIN Artists AR ON TG."Track Artist Name" = AR.name
+                JOIN Artists AR ON TG."Track Artist Names" = AR.name
                 WHERE AR.name = ?
                 GROUP BY TG."Track Genre"
             """
@@ -274,7 +274,7 @@ def artists():
             artist_query = """
                 SELECT DISTINCT AR.name
                 FROM Artists AR
-                JOIN TracksAudioFeatures TAF ON AR.name = TAF."Track Artist Name"
+                JOIN TracksAudioFeatures TAF ON AR.name = TAF."Track Artist Names"
                 WHERE AR.name LIKE ?
                 ORDER BY AR.name
             """
@@ -283,7 +283,7 @@ def artists():
             artist_query = """
                 SELECT DISTINCT AR.name
                 FROM Artists AR
-                JOIN TracksAudioFeatures TAF ON AR.name = TAF."Track Artist Name"
+                JOIN TracksAudioFeatures TAF ON AR.name = TAF."Track Artist Names"
                 ORDER BY AR.name
             """
             cursor.execute(artist_query)

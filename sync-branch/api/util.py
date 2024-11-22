@@ -10,6 +10,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Function to fetch user profile info (user_id, email, display_name) from Spotify API
+def fetch_user_profile(access_token):
+    url = "https://api.spotify.com/v1/me"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        user_data = response.json()
+        return {
+            "user_id": user_data["id"],
+            "email": user_data.get("email"),
+            "display_name": user_data.get("display_name")
+        }
+    else:
+        if DEBUG_MODE or WARNING_MODE:
+            print(f"[WARNING] Failed to fetch user profile: {response.status_code} - {response.text}")
+        return None
+
 
 credentials_str = os.getenv("CREDENTIALS")
 api_commands_str = os.getenv("API_COMMANDS")

@@ -3,6 +3,12 @@ import requests
 import os
 import base64
 from dotenv import load_dotenv
+import sys
+
+# Check if '--debug' is passed as a command-line argument
+DEBUG_MODE = '--debug' in sys.argv
+WARNING_MODE = '--warning' in sys.argv
+ERROR_MODE = '--error' in sys.argv
 
 load_dotenv()
 
@@ -20,8 +26,8 @@ def is_token_valid(access_token):
 # Function to refresh access token using the refresh token
 def refresh_access_token(refresh_token):
     url = "https://accounts.spotify.com/api/token"
-    CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-    CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+    CLIENT_ID = os.getenv("AUTH_CLIENT_ID")
+    CLIENT_SECRET = os.getenv("AUTH_CLIENT_SECRET")
     auth_header = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
 
     headers = {
@@ -37,7 +43,8 @@ def refresh_access_token(refresh_token):
     if response.status_code == 200:
         return response.json()["access_token"], response.json().get("refresh_token", refresh_token)
     else:
-        print(f"Failed to refresh token: {response.status_code} - {response.text}")
+        if DEBUG_MODE or WARNING_MODE:
+            print(f"[WARNING] Failed to refresh token: {response.status_code} - {response.text}")
         return None, None
 
 # Function to fetch user profile info (user_id, email, display_name) from Spotify API
@@ -53,7 +60,8 @@ def fetch_user_profile(access_token):
             "display_name": user_data.get("display_name")
         }
     else:
-        print(f"Failed to fetch user profile: {response.status_code} - {response.text}")
+        if DEBUG_MODE or WARNING_MODE:
+            print(f"[WARNING] Failed to fetch user profile: {response.status_code} - {response.text}")
         return None
 
 # Function to update auth_tokens.json with user_id if missing, refresh expired tokens, and ensure one token per user_id
@@ -80,13 +88,15 @@ def update_auth_tokens():
 
         # Check if token is valid; refresh if needed
         if not is_token_valid(access_token):
-            print("Access token expired. Refreshing...")
+            if DEBUG_MODE:
+                print("[DEBUG] Access token expired. Refreshing...")
             access_token, refresh_token = refresh_access_token(refresh_token)
             if access_token:
                 token_entry["access_token"] = access_token
                 token_entry["refresh_token"] = refresh_token
             else:
-                print("Could not refresh access token. Skipping entry.")
+                if DEBUG_MODE or WARNING_MODE:
+                    print("[WARNING] Could not refresh access token. Skipping entry.")
                 continue
 
         # Fetch user profile and add user_id, email, and display_name if missing
@@ -94,7 +104,7 @@ def update_auth_tokens():
             user_profile = fetch_user_profile(access_token)
             if user_profile:
                 token_entry["user_id"] = user_profile["user_id"]
-                print(f"Added user_id {user_profile['user_id']} to token.")
+                print(f"[INFO] Added user_id {user_profile['user_id']} to token.")
 
                 # Check if this user is new (not in newbie.json)
                 if user_profile not in new_users:
@@ -104,9 +114,10 @@ def update_auth_tokens():
                         "display_name": user_profile["display_name"]
                     }
                     new_users.append(new_user_info)
-                    print(f"Added new user to newbie.json: {new_user_info}")
+                    print(f"[INFO] Added new user to newbie.json: {new_user_info}")
             else:
-                print("Could not fetch user profile for an entry. Skipping...")
+                if WARNING_MODE:
+                    print("[WARNING] Could not fetch user profile for an entry. Skipping...")
                 continue
 
         # Ensure only one token per user_id, keeping the latest token if duplicates exist
@@ -116,12 +127,12 @@ def update_auth_tokens():
     # Write the unique tokens list back to auth_tokens.json
     with open("auth_tokens.json", "w") as f:
         json.dump(list(updated_tokens.values()), f, indent=4)
-    print("auth_tokens.json updated successfully.")
+    print("[INFO] auth_tokens.json updated successfully.")
 
     # Write new users' information to newbie.json
     with open("newbie.json", "w") as f:
         json.dump(new_users, f, indent=4)
-    print("newbie.json updated with new user details.")
+    print("[INFO] newbie.json updated with new user details.")
 
 # Main function to run the update process
 if __name__ == "__main__":

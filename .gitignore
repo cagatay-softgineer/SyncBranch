@@ -168,5 +168,5 @@ newbie.json
 api_status.json
 auth_tokens.json
 sync-branch/api/__pycache__/
-sync-branch/api/credentials.json
 gender_api
+sync-branch/SavedTracks

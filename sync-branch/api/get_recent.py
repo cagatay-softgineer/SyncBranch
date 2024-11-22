@@ -5,6 +5,18 @@ import json
 import base64
 from dotenv import load_dotenv
 import os
+import sys
+
+# Check if '--debug' is passed as a command-line argument
+DEBUG_MODE = '--debug' in sys.argv
+WARNING_MODE = '--warning' in sys.argv
+ERROR_MODE = '--error' in sys.argv
+
+#####
+# 50 is Limit of Get Recent API.
+# AVG Tracks time * (30-40) Minute is most accurate way to repeat this.
+# AVG Tracks Time ~= 3 minute 47 sec. which is calculated from all fetched tracks data from database.
+######
 
 load_dotenv()
 
@@ -25,9 +37,9 @@ def get_all_tokens_with_user_ids():
                 # Return a list of dictionaries with user_id and access_token
                 return [{"user_id": token["user_id"], "access_token": token["access_token"]} for token in tokens]
             else:
-                raise Exception("No tokens found in auth_tokens.json.")
+                raise Exception("[ERROR] No tokens found in auth_tokens.json.")
     except Exception as e:
-        raise Exception(f"Error reading auth token: {e}")
+        raise Exception(f"[ERROR] Error reading auth token: {e}")
 
 # Function to check if the access token is valid
 def is_token_valid(access_token):
@@ -41,7 +53,7 @@ def is_token_valid(access_token):
     elif response.status_code == 401:  # Unauthorized indicates expired/invalid token
         return False
     else:
-        raise Exception(f"Unexpected error checking token validity: {response.status_code} - {response.text}")
+        raise Exception(f"[ERROR] Unexpected error checking token validity: {response.status_code} - {response.text}")
 
 # Function to refresh the access token
 def refresh_access_token(refresh_token):
@@ -73,11 +85,11 @@ def refresh_access_token(refresh_token):
         new_token_entry = {"access_token": new_access_token, "refresh_token": refresh_token}
         with open("auth_tokens.json", "w") as f:
             json.dump([new_token_entry], f, indent=4)  # Save as a list with the latest token
-
-        print("Access token refreshed successfully.")
+        if DEBUG_MODE:
+            print("[DEBUG] Access token refreshed successfully.")
         return new_access_token
     else:
-        raise Exception(f"Failed to refresh token: {response.status_code} - {response.text}")
+        raise Exception(f"[ERROR] Failed to refresh token: {response.status_code} - {response.text}")
     
 # Function to check and insert user data
 def check_and_insert_user(user_id, access_token):
@@ -103,7 +115,8 @@ def check_and_insert_user(user_id, access_token):
             """, user_id, display_name, email, profile_image_url, country)
             conn.commit()
         else:
-            print(f"Failed to fetch user profile: {response.status_code} - {response.text}")
+            if DEBUG_MODE or ERROR_MODE:
+                print(f"[WARNING] Failed to fetch user profile: {response.status_code} - {response.text}")
             return False
     cursor.close()
     conn.close()
@@ -131,7 +144,8 @@ def check_and_insert_album(album_id, access_token):
             album_data.get("album_type", ""), album_data.get("href", ""), album_data.get("uri", ""))
             conn.commit()
         else:
-            print(f"Failed to fetch album data for album_id {album_id}: {response.status_code} - {response.text}")
+            if DEBUG_MODE or ERROR_MODE:
+                print(f"[WARNING] Failed to fetch album data for album_id {album_id}: {response.status_code} - {response.text}")
             return False
     cursor.close()
     conn.close()
@@ -146,7 +160,8 @@ def check_and_insert_track(track_id, album_id, access_token):
     if cursor.fetchone() is None:
         # Ensure album exists in Albums table before inserting the track
         if not check_and_insert_album(album_id, access_token):
-            print(f"Failed to insert album for track {track_id}. Aborting track insertion.")
+            if DEBUG_MODE or ERROR_MODE:
+                print(f"[WARNING] Failed to insert album for track {track_id}. Aborting track insertion.")
             return False
 
         url = f"https://api.spotify.com/v1/tracks/{track_id}"
@@ -164,7 +179,8 @@ def check_and_insert_track(track_id, album_id, access_token):
             track_data["href"], track_data["uri"])
             conn.commit()
         else:
-            print(f"Failed to fetch track data for track_id {track_id}: {response.status_code} - {response.text}")
+            if DEBUG_MODE or ERROR_MODE:
+                print(f"[WARNING] Failed to fetch track data for track_id {track_id}: {response.status_code} - {response.text}")
             return False
     cursor.close()
     conn.close()
@@ -179,7 +195,7 @@ def get_recently_played_tracks(access_token):
     if response.status_code == 200:
         return response.json()["items"]
     else:
-        raise Exception(f"Error fetching recently played tracks: {response.status_code} - {response.text}")
+        raise Exception(f"[ERROR] Error fetching recently played tracks: {response.status_code} - {response.text}")
 
 # Function to insert recently played tracks
 def insert_recently_played_tracks():
@@ -190,13 +206,15 @@ def insert_recently_played_tracks():
         
         # Check if the token is valid; refresh if necessary
         if not is_token_valid(access_token):
-            print(f"Access token for user {user_id} is invalid or expired.")
+            if DEBUG_MODE or WARNING_MODE:
+                print(f"[WARNING] Access token for user {user_id} is invalid or expired.")
             continue
         
-        print(f"Processing recently played tracks for user {user_id}.")
+        print(f"[INFO] Processing recently played tracks for user {user_id}.")
         
         if not check_and_insert_user(user_id, access_token):
-            print(f"Failed to insert user {user_id}. Aborting.")
+            if DEBUG_MODE or WARNING_MODE:
+                print(f"[WARNING] Failed to insert user {user_id}. Aborting.")
             continue
     
         tracks = get_recently_played_tracks(access_token)
@@ -219,12 +237,13 @@ def insert_recently_played_tracks():
                     conn.commit()
                 except pyodbc.IntegrityError as e:  # noqa: F841
                     # Handle duplicate entry case
-                    print(f"Duplicate entry for user {user_id}, track {track_id} at {played_at}. Skipping.")
+                    if DEBUG_MODE:
+                        print(f"[DEBUG] Duplicate entry for user {user_id}, track {track_id} at {played_at}. Skipping.")
                     conn.rollback()  # Rollback if insertion fails
 
         cursor.close()
         conn.close()
-        print(f"Recently played tracks stored successfully for user {user_id}.")
+        print(f"[INFO] Recently played tracks stored successfully for user {user_id}.")
 
 
 # Main function
@@ -232,7 +251,7 @@ def main():
     try:
         insert_recently_played_tracks()
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"[ERROR] Error: {e}")
 
 if __name__ == "__main__":
     main()

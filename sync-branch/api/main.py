@@ -7,6 +7,9 @@ from playlist_operations import handle_playlists
 import sys
 from dotenv import load_dotenv
 import os
+from cmd_gui_kit import CmdGUI
+
+gui = CmdGUI()
 
 # Check if '--debug' is passed as a command-line argument
 DEBUG_MODE = '--debug' in sys.argv
@@ -33,29 +36,29 @@ def process_user_data(user_id, conn, cursor, debug_mode=DEBUG_MODE, warning_mode
         # Check if user data already exists and insert if not
         if not check_user_exists(user_id, cursor):
             if debug_mode:
-                print(f"[DEBUG] Inserting data for new user: {user_id}")
+                gui.log(f"Inserting data for new user: {user_id}", level="info")
             try:
                 insert_user_data(user_id, headers, cursor, conn)
             except AttributeError as e:
                 if debug_mode or error_mode:
-                    print(f"[ERROR] AttributeError encountered for user {user_id} during data insertion: {e}")
+                    gui.status(f"AttributeError encountered for user {user_id} during data insertion: {e}",status="error")
                 # Continue with processing playlists even if an error occurred
 
         # Process playlists for the user
         if debug_mode:
-            print(f"[DEBUG] Handling playlists for user: {user_id}")
+            gui.log(f"Handling playlists for user: {user_id}", level="info")
         try:
             handle_playlists(user_id, cursor, conn)
             return True  # Indicate successful processing
         except AttributeError as e:
             if debug_mode or error_mode:
-                print(f"[ERROR] AttributeError encountered for user {user_id} during playlist handling: {e}")
+                gui.status(f"AttributeError encountered for user {user_id} during playlist handling: {e}",status="error")
             # Continue to the next step even if an error occurred
             return False
 
     except Exception as e:
         if debug_mode or error_mode:
-            print(f"[ERROR] General error processing user {user_id}: {e}")
+            gui.status(f"General error processing user {user_id}: {e}",status="error")
         return False
 
 # Update processed status in CSV file
@@ -80,10 +83,10 @@ def main(CSV_path, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=
         conn = pyodbc.connect(CONNECTION_STRING)
         cursor = conn.cursor()
         if debug_mode:
-            print("[DEBUG] Connected to the database successfully.")
+            gui.status("Connected to the database successfully.", status="success")
     except pyodbc.Error as db_err:
         if debug_mode or error_mode:
-            print(f"[ERROR] Database connection failed: {db_err}")
+            gui.status(f"Database connection failed: {db_err}", status="error")
         return
 
     # Read user IDs from CSV file
@@ -96,7 +99,7 @@ def main(CSV_path, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=
 
                 # Process only users who have not been processed
                 if processed == '0':
-                    print(f"[INFO] Processing user: {user_id}")
+                    gui.log(f"Processing user: {user_id}",level="info")
                     success = process_user_data(user_id, conn, cursor)
 
                     # Mark user as processed if successful
@@ -105,23 +108,23 @@ def main(CSV_path, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=
 
     except FileNotFoundError:
         if debug_mode or error_mode:
-            print(f"[ERROR] CSV file {CSV_path} not found.")
+            gui.status(f"CSV file {CSV_path} not found.",status="error")
     except KeyError as key_err:
         if debug_mode or warning_mode:
-            print(f"[WARNING] CSV file format error: Missing key {key_err}")
+            gui.status(f"CSV file format error: Missing key {key_err}",status="warning")
     except Exception as e:
         if debug_mode or error_mode:
-            print(f"[ERROR] An error occurred while reading the CSV file: {e}")
+            gui.status(f"An error occurred while reading the CSV file: {e}",status="error")
     finally:
         # Close the database connection
         cursor.close()
         conn.close()
         if debug_mode:
-            print("[DEBUG] Database connection closed.")
+            gui.status("Database connection closed.", status="info") 
 
 if __name__ == "__main__":
     CSV_path = "user_ids.csv"
     start_time = time.time()
     main(CSV_path)
     end_time = time.time()
-    print(f"[INFO] Data for all users saved to the database.\nExecution time: {end_time - start_time:.2f} seconds.")
+    gui.status(f"Data for all users saved to the database.\nExecution time: {end_time - start_time:.2f} seconds.",status="success")

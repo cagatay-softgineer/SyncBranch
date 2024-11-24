@@ -7,6 +7,9 @@ from threading import Lock
 import sys
 from check_credentials import check_api_status
 from dotenv import load_dotenv
+from cmd_gui_kit import CmdGUI
+
+gui = CmdGUI()
 
 load_dotenv()
 
@@ -24,7 +27,7 @@ def fetch_user_profile(access_token):
         }
     else:
         if DEBUG_MODE or WARNING_MODE:
-            print(f"[WARNING] Failed to fetch user profile: {response.status_code} - {response.text}")
+            gui.log(f"Failed to fetch user profile: {response.status_code} - {response.text}", level="warn")
         return None
 
 
@@ -87,17 +90,17 @@ def update_client_status(client_id, new_status_dict, debug_mode=DEBUG_MODE, warn
         with open(STATUS_FILE, 'w') as f:
             json.dump(status_data, f, indent=4)
         if debug_mode:
-            print(f"[DEBUG] Updated all statuses for client_id {client_id}.")
+            gui.log(f"Updated all statuses for client_id {client_id}.", level="info")
 
     except FileNotFoundError:
         if debug_mode or error_mode:
-            print(f"[ERROR] Status file {STATUS_FILE} not found. Cannot update client status.")
+            gui.status(f"Status file {STATUS_FILE} not found. Cannot update client status.", status="error")
     except json.JSONDecodeError:
         if debug_mode or error_mode:
-            print(f"[ERROR] Failed to decode JSON from {STATUS_FILE}.")
+            gui.status(f"Failed to decode JSON from {STATUS_FILE}.", status="error")
     except Exception as e:
         if debug_mode or error_mode:
-            print(f"[ERROR] An unexpected error occurred: {e}")
+            gui.status(f"An unexpected error occurred: {e}", status="error")
 
 # Function to check if an API key is marked as rate-limited
 def is_key_rate_limited(client_id, request_type, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE):
@@ -109,7 +112,7 @@ def is_key_rate_limited(client_id, request_type, debug_mode=DEBUG_MODE, warning_
                     return True
     except FileNotFoundError:
         if debug_mode or error_mode:
-            print(f"[ERROR] Status file {STATUS_FILE} not found. Cannot check API key status.")
+            gui.status(f"Status file {STATUS_FILE} not found. Cannot check API key status.", status="error")
     return False
 
 def get_active_key_for_request(request_type):
@@ -143,7 +146,7 @@ def get_access_token_for_request(request_type, debug_mode=DEBUG_MODE, warning_mo
     # Check if the current credential is still active
     if current_credential and not is_key_rate_limited(current_credential, request_type):
         if debug_mode:
-            print(f"[DEBUG] Using cached token for client_id {current_credential} for request type: {request_type}")
+            gui.log(f"Using cached token for client_id {current_credential} for request type: {request_type}", level="info")
         return token_cache[request_type]['tokens'][current_credential]
 
     # If no valid current credential, find a new one
@@ -154,14 +157,14 @@ def get_access_token_for_request(request_type, debug_mode=DEBUG_MODE, warning_mo
         # Skip if this client ID is marked as rate-limited
         if is_key_rate_limited(client_id, request_type):
             if debug_mode:
-                print(f"[DEBUG] Skipping client_id {client_id} as it is marked 'Rate-Limited' for {request_type}.")
+                gui.log(f"Skipping client_id {client_id} as it is marked 'Rate-Limited' for {request_type}.", level="info")
             continue
 
         # If token is already cached for this client ID, use it
         if client_id in token_cache[request_type]['tokens']:
             token_cache[request_type]['current_credential'] = client_id
             if debug_mode:
-                print(f"[DEBUG] Using cached token for client_id {client_id} for request type: {request_type}", end="\r")
+                gui.log(f"Using cached token for client_id {client_id} for request type: {request_type}", level="info")
             return token_cache[request_type]['tokens'][client_id]
 
         # Request a new access token for this client ID
@@ -188,25 +191,25 @@ def get_access_token_for_request(request_type, debug_mode=DEBUG_MODE, warning_mo
             status_results = check_api_status(access_token, API_COMMANDS)
             update_client_status(client_id,status_results)
             if debug_mode:
-                print(f"[DEBUG] New access token obtained using client_id {client_id} for request type: {request_type}")
+                gui.log(f"New access token obtained using client_id {client_id} for request type: {request_type}", level="info")
             return access_token
         elif response.status_code == 429:
             retry_after = int(response.headers.get("Retry-After", 1))
             status_results = check_api_status(access_token, API_COMMANDS)
             update_client_status(client_id,status_results)
             if debug_mode or warning_mode:
-                print(f"[WARNING] Rate limit exceeded for client_id {client_id}. Marked as 'Rate-Limited'. Retrying after {retry_after} seconds.")
+                gui.log(f"Rate limit exceeded for client_id {client_id}. Marked as 'Rate-Limited'. Retrying after {retry_after} seconds.", level="warn")
             time.sleep(retry_after)
         else:
             status_results = check_api_status(access_token, API_COMMANDS)
             update_client_status(client_id,status_results)
             if debug_mode or error_mode:
-                print(f"[ERROR] Failed to obtain token for client_id {client_id}. Status code: {response.status_code}")
+                gui.status(f"Failed to obtain token for client_id {client_id}. Status code: {response.status_code}", status="error")
                 
     # If all credentials are exhausted, log and raise an exception
     if debug_mode or error_mode:
-        print(f"[ERROR] No valid tokens could be obtained for request type: {request_type}")
-    raise Exception(f"[ERROR] No valid tokens could be obtained for request type: {request_type}")
+        gui.status(f"No valid tokens could be obtained for request type: {request_type}", status="error")
+    raise Exception()
 
 def make_request(url, request_type, max_retries=5, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE):
     """
@@ -230,13 +233,13 @@ def make_request(url, request_type, max_retries=5, debug_mode=DEBUG_MODE, warnin
             return response
         elif response.status_code == 404:
             if debug_mode or warning_mode:
-                print(f"[WARNING] Resource not found: {url}")
+                gui.log(f"Resource not found: {url}", level="info")
             return None  # Log and skip if resource is not found
         elif response.status_code == 429:
             # Rate limit exceeded, check `Retry-After` header
             retry_after = int(response.headers.get("Retry-After", 1))
             if debug_mode or warning_mode:
-                print(f"[WARNING] Rate limit exceeded. Waiting for {retry_after} seconds before retrying.")
+                gui.log(f"Rate limit exceeded. Waiting for {retry_after} seconds before retrying.", level="info")
             time.sleep(retry_after)
 
             # Get a new access token in case of rate limit
@@ -245,7 +248,7 @@ def make_request(url, request_type, max_retries=5, debug_mode=DEBUG_MODE, warnin
         else:
             response.raise_for_status()
     if debug_mode or error_mode:
-        print("[ERRROR] Failed to fetch data after retries.")
+        gui.status("Failed to fetch data after retries.", status="error")
     return None
 
 # Example usage

@@ -14,7 +14,7 @@
             <h1>Tracks</h1>
 
             <!-- Search Form -->
-            <form method="get" action="{{ url_for('show_tracks_audio_features') }}">
+            <form method="get" action="{{ url_for('tracks_embeds') }}">
                 <input type="text" name="search" placeholder="Search by track name or artist name..." value="{{ search_query }}" class="search-bar">
                 <button type="submit" class="button">Search</button>
             </form>

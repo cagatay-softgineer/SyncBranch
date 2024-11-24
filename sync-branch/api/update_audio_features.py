@@ -4,6 +4,9 @@ from tqdm import tqdm
 import sys
 import os
 from dotenv import load_dotenv
+from cmd_gui_kit import CmdGUI
+
+gui = CmdGUI()
 
 # Check if '--debug' is passed as a command-line argument
 DEBUG_MODE = '--debug' in sys.argv
@@ -55,7 +58,7 @@ def check_and_update_audio_features(debug_mode=DEBUG_MODE, warning_mode=WARNING_
     missing_audio_features_tracks = fetch_tracks_missing_audio_features(cursor)
 
     if debug_mode:
-        print(f"[DEBUG] Found {len(missing_audio_features_tracks)} tracks missing audio features.")
+        gui.log(f"Found {len(missing_audio_features_tracks)} tracks missing audio features.", level="info")
 
     # Process tracks in batches to avoid rate limiting
     batch_size = 100
@@ -65,7 +68,7 @@ def check_and_update_audio_features(debug_mode=DEBUG_MODE, warning_mode=WARNING_
 
     cursor.close()
     conn.close()
-    print("Finished updating missing audio features.")
+    gui.status("Finished updating missing audio features.", status="success")
 
 def main():
     # Run the audio feature check and update function

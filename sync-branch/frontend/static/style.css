@@ -35,7 +35,7 @@ body {
 .content-container {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    flex-grow: 2;
 }
 
 /* Centering the content and adding a blur effect */
@@ -77,6 +77,22 @@ body {
     backdrop-filter: blur(10px); /* Background blur */
     max-width: 1800px; /* Increased width for table display */
     width: 95%; /* Full width on small screens */
+    box-sizing: border-box;
+    text-align: center;
+    color: #e0d4b3; /* Soft golden text for readability */
+    flex-grow: 1; /* Allow content to grow and push footer down */
+    margin: 40px auto; /* Center content vertically with top and bottom margin */
+}
+
+.content-all-users {
+    background-color: rgba(0, 0, 0, 0.6); /* Dark semi-transparent background */
+    padding: 20px 40px;
+    padding-bottom: 15svh;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px); /* Background blur */
+    max-width: 1800px; /* Increased width for table display */
+    width: 80%; /* Full width on small screens */
     box-sizing: border-box;
     text-align: center;
     color: #e0d4b3; /* Soft golden text for readability */

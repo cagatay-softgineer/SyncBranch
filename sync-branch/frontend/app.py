@@ -47,6 +47,10 @@ with open('gender_api/first_names/first_names.json', 'r', encoding='utf-8') as f
 
 
 def get_gender_icon(display_name):
+    
+    if " " in display_name:
+        display_name = display_name.split(" ")[0]
+    
     if display_name in gender_data:
         gender_probs = gender_data[display_name].get('gender', {})
         if gender_probs:
@@ -60,14 +64,7 @@ def get_gender_icon(display_name):
 @app.route('/')
 def main_page():
     try:
-        # If user data is available, you can fetch personalized info here
-        # Example: Fetch a sample user display name for a personalized link
-        user_display_name = "bg"  # Replace with dynamic user info if available
-
-        return render_template(
-            'index.html',
-            user_display_name=user_display_name  # Pass any dynamic data needed
-        )
+        return render_template('index.html')
     except Exception as e:
         error_message = f"Error loading the main page: {e}"
         return render_template('error.html', error_message=error_message)
@@ -376,7 +373,7 @@ def all_users():
             {
                 "user_id": user[0],  # Pass user_id
                 "display_name": user[1],
-                "profile_image_url": user[2] or '/static/icons/default_user.png',
+                "profile_image_url": user[2] or get_gender_icon(user[1]) or '/static/icons/default_user.png',
                 "personal_type": user[3] or "Unknown"
             }
             for user in users
@@ -417,7 +414,7 @@ def user_profile(user_id):
         user_info = {
             "user_id": user_info[0],
             "display_name": user_info[1],
-            "profile_image_url": user_info[2] or '/static/icons/default_user.png',
+            "profile_image_url": user_info[2] or get_gender_icon(user_info[1]) or'/static/icons/default_user.png',
             "personal_type": user_info[3],
             "type_description": user_info[4]
         }
@@ -469,13 +466,13 @@ ORDER BY
             {
             "match_user_id": match[0],  # Added match_user_id
             "match_user_name": match[1],
-            "match_user_image": match[2] or '/static/icons/default_user.png',
+            "match_user_image": match[2] or get_gender_icon(match[1]) or'/static/icons/default_user.png',
             "final_match_rate_percentage": match[3],
             "match_user_type": match[4]
             } for match in top_matches
         ]
 
-        # Fetch top 50 matches
+        # Fetch top 100 matches
         cursor.execute("""
         WITH RankedMatches AS (
     SELECT 
@@ -503,7 +500,7 @@ ORDER BY
     WHERE 
         u1.user_id = ? OR u2.user_id = ?
 )
-SELECT TOP 50
+SELECT
     match_user_id,
     match_user_name,
     match_user_image,
@@ -521,7 +518,7 @@ ORDER BY
             {
                 "match_user_id": match[0],  # Ensure index 0 corresponds to match_user_id
                 "match_user_name": match[1],  # Ensure index 1 corresponds to match_user_name
-                "match_user_image": match[2] or '/static/icons/default_user.png',  # Ensure index 2 corresponds to match_user_image
+                "match_user_image": match[2] or get_gender_icon(match[1]) or'/static/icons/default_user.png',  # Ensure index 2 corresponds to match_user_image
                 "final_match_rate_percentage": match[3],  # Ensure index 3 corresponds to final_match_rate_percentage
                 "match_user_type": match[4]  # Ensure index 4 corresponds to match_user_type
             } for match in all_matches

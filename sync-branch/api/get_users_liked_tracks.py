@@ -1,6 +1,9 @@
 import requests
 import json
 from util import fetch_user_profile
+from cmd_gui_kit import CmdGUI
+
+gui = CmdGUI()
 
 def fetch_user_saved_tracks(access_token):
     base_url = "https://api.spotify.com/v1/me/tracks"
@@ -17,10 +20,10 @@ def fetch_user_saved_tracks(access_token):
         params = {"limit": limit, "offset": offset}
         response = requests.get(base_url, headers=headers, params=params)
         if response.status_code == 403:
-            print("[WARNING] Permission Denied: Check token scopes.")
+            gui.log("Permission Denied: Check token scopes.", level="warn")
             break
         elif response.status_code != 200:
-            print(f"[ERROR] {response.status_code} - {response.text}")
+            gui.status(f"{response.status_code} - {response.text}", status="error")
             break
 
         data = response.json()
@@ -32,7 +35,7 @@ def fetch_user_saved_tracks(access_token):
 
     with open(f"sync-branch/SavedTracks/{user_id}_saved_tracks.json", "w", encoding="utf-8") as file:
         json.dump(total_tracks, file, indent=4, ensure_ascii=False)
-    print(f"[INFO] Total tracks saved : {len(total_tracks)} --> For User {user_id}")
+    gui.log(f"Total tracks saved : {len(total_tracks)} --> For User {user_id}", level="info")
 
 
 # Execute the function
@@ -41,7 +44,7 @@ def get_users_liked_tracks():
         with open("auth_tokens.json", "r") as f:
             tokens = json.load(f)
     except FileNotFoundError:
-        print("[ERROR] auth_tokens.json file not found.")
+        gui.status("auth_tokens.json file not found.", status="error")
         return
 
     for token_entry in tokens:

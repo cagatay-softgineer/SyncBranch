@@ -6,6 +6,9 @@ import base64
 from dotenv import load_dotenv
 import os
 import sys
+from cmd_gui_kit import CmdGUI
+
+gui = CmdGUI()
 
 # Check if '--debug' is passed as a command-line argument
 DEBUG_MODE = '--debug' in sys.argv
@@ -86,7 +89,7 @@ def refresh_access_token(refresh_token):
         with open("auth_tokens.json", "w") as f:
             json.dump([new_token_entry], f, indent=4)  # Save as a list with the latest token
         if DEBUG_MODE:
-            print("[DEBUG] Access token refreshed successfully.")
+            gui.log("Access token refreshed successfully.", level="info")
         return new_access_token
     else:
         raise Exception(f"[ERROR] Failed to refresh token: {response.status_code} - {response.text}")
@@ -116,7 +119,7 @@ def check_and_insert_user(user_id, access_token):
             conn.commit()
         else:
             if DEBUG_MODE or ERROR_MODE:
-                print(f"[WARNING] Failed to fetch user profile: {response.status_code} - {response.text}")
+                gui.log(f"Failed to fetch user profile: {response.status_code} - {response.text}", level="warn")
             return False
     cursor.close()
     conn.close()
@@ -145,7 +148,7 @@ def check_and_insert_album(album_id, access_token):
             conn.commit()
         else:
             if DEBUG_MODE or ERROR_MODE:
-                print(f"[WARNING] Failed to fetch album data for album_id {album_id}: {response.status_code} - {response.text}")
+                gui.log(f"Failed to fetch album data for album_id {album_id}: {response.status_code} - {response.text}", level="warn")
             return False
     cursor.close()
     conn.close()
@@ -161,7 +164,7 @@ def check_and_insert_track(track_id, album_id, access_token):
         # Ensure album exists in Albums table before inserting the track
         if not check_and_insert_album(album_id, access_token):
             if DEBUG_MODE or ERROR_MODE:
-                print(f"[WARNING] Failed to insert album for track {track_id}. Aborting track insertion.")
+                gui.log(f"Failed to insert album for track {track_id}. Aborting track insertion.", level="warn")
             return False
 
         url = f"https://api.spotify.com/v1/tracks/{track_id}"
@@ -180,7 +183,7 @@ def check_and_insert_track(track_id, album_id, access_token):
             conn.commit()
         else:
             if DEBUG_MODE or ERROR_MODE:
-                print(f"[WARNING] Failed to fetch track data for track_id {track_id}: {response.status_code} - {response.text}")
+                gui.log(f"Failed to fetch track data for track_id {track_id}: {response.status_code} - {response.text}", level="warn")
             return False
     cursor.close()
     conn.close()
@@ -207,14 +210,14 @@ def insert_recently_played_tracks():
         # Check if the token is valid; refresh if necessary
         if not is_token_valid(access_token):
             if DEBUG_MODE or WARNING_MODE:
-                print(f"[WARNING] Access token for user {user_id} is invalid or expired.")
+                gui.log(f"Access token for user {user_id} is invalid or expired.", level="warn")
             continue
         
-        print(f"[INFO] Processing recently played tracks for user {user_id}.")
+        gui.log(f"Processing recently played tracks for user {user_id}.", level="info")
         
         if not check_and_insert_user(user_id, access_token):
             if DEBUG_MODE or WARNING_MODE:
-                print(f"[WARNING] Failed to insert user {user_id}. Aborting.")
+                gui.log(f"Failed to insert user {user_id}. Aborting.", level="warn")
             continue
     
         tracks = get_recently_played_tracks(access_token)
@@ -238,12 +241,12 @@ def insert_recently_played_tracks():
                 except pyodbc.IntegrityError as e:  # noqa: F841
                     # Handle duplicate entry case
                     if DEBUG_MODE:
-                        print(f"[DEBUG] Duplicate entry for user {user_id}, track {track_id} at {played_at}. Skipping.")
+                        gui.log(f"[DEBUG] Duplicate entry for user {user_id}, track {track_id} at {played_at}. Skipping.", level="info")
                     conn.rollback()  # Rollback if insertion fails
 
         cursor.close()
         conn.close()
-        print(f"[INFO] Recently played tracks stored successfully for user {user_id}.")
+        gui.log(f"Recently played tracks stored successfully for user {user_id}.", level="info")
 
 
 # Main function
@@ -251,7 +254,7 @@ def main():
     try:
         insert_recently_played_tracks()
     except Exception as e:
-        print(f"[ERROR] Error: {e}")
+        gui.status(f"Error: {e}", status="error")
 
 if __name__ == "__main__":
     main()

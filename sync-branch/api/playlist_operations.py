@@ -1,6 +1,9 @@
 from util import make_request
 from db_operations import check_and_insert_playlist, check_and_insert_track, fetch_and_insert_audio_features
 import sys
+from cmd_gui_kit import CmdGUI
+
+gui = CmdGUI()
 
 # Check if '--debug' is passed as a command-line argument
 DEBUG_MODE = '--debug' in sys.argv
@@ -26,7 +29,7 @@ def handle_playlists(user_id, cursor, conn, debug_mode=DEBUG_MODE, warning_mode=
     
     if playlists_response is None:
         if debug_mode or error_mode:
-            print(f"[ERROR] No data received for user {user_id}'s playlists.")
+            gui.status(f"No data received for user {user_id}'s playlists.", status="error")
         return  # Skip processing if there's no data
 
     if playlists_response and playlists_response.status_code == 200:
@@ -34,8 +37,8 @@ def handle_playlists(user_id, cursor, conn, debug_mode=DEBUG_MODE, warning_mode=
         for playlist in playlists_data["items"]:
             if not playlist:
                 if debug_mode:
-                    print(f"[DEBUG] User {user_id} has playlists, but they are empty.")
-                    print("[DEBUG] Skipping playlist..")
+                    gui.log(f"User {user_id} has playlists, but they are empty.", level="info")
+                    gui.log("Skipping playlist..", level="info")
                 return  # Exit if playlists are empty
             
             # Insert playlist and associate with user
@@ -52,7 +55,7 @@ def handle_playlists(user_id, cursor, conn, debug_mode=DEBUG_MODE, warning_mode=
                     check_and_insert_track(track_item, playlist_id, None, cursor, conn, track_buffer, debug_mode=debug_mode)
             else:
                 if debug_mode or error_mode:
-                    print(f"[ERROR] Fetching failed to get tracks for playlist {playlist_id}.")
+                    gui.status(f"Fetching failed to get tracks for playlist {playlist_id}.", status="error")
 
         # After processing all playlists, ensure remaining tracks in buffer are processed
         if track_buffer:
@@ -60,7 +63,7 @@ def handle_playlists(user_id, cursor, conn, debug_mode=DEBUG_MODE, warning_mode=
             track_buffer.clear()  # Clear the buffer after processing
     else:
         if debug_mode or error_mode:
-            print(f"[ERROR] Fetching failed to get playlists for user {user_id}.")
+            gui.status(f"Fetching failed to get playlists for user {user_id}.", status="error")
             
             
 def handle_playlist(playlist_id, cursor, conn, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE):
@@ -80,7 +83,7 @@ def handle_playlist(playlist_id, cursor, conn, debug_mode=DEBUG_MODE, warning_mo
 
     # Use the request type "Get Playlist" for token management
     if debug_mode:
-        print(f"[DEBUG] Fetching tracks for playlist ID: {playlist_id}")
+        gui.log(f"Fetching tracks for playlist ID: {playlist_id}", level="info")
 
     # Fetch tracks for the given playlist ID
     tracks_url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
@@ -88,19 +91,19 @@ def handle_playlist(playlist_id, cursor, conn, debug_mode=DEBUG_MODE, warning_mo
 
     if tracks_response is None:
         if debug_mode or error_mode:
-            print(f"[ERROR] No data received for playlist ID {playlist_id}.")
+            gui.status(f"No data received for playlist ID {playlist_id}.", status="error")
         return  # Skip processing if there's no data
 
     if tracks_response and tracks_response.status_code == 200:
         tracks_data = tracks_response.json()
 
         if debug_mode:
-            print(f"[DEBUG] Processing tracks for playlist ID: {playlist_id}")
+            gui.log(f"Processing tracks for playlist ID: {playlist_id}", level="info")
 
         for track_item in tracks_data["items"]:
             if not track_item or 'track' not in track_item or track_item['track'] is None:
                 if warning_mode:
-                    print(f"[WARNING] Skipping invalid track data in playlist {playlist_id}.")
+                    gui.log(f"Skipping invalid track data in playlist {playlist_id}.", level="warn")
                 continue  # Skip invalid or unavailable track data
 
             # Pass the playlist ID and track_buffer to check_and_insert_track
@@ -112,9 +115,9 @@ def handle_playlist(playlist_id, cursor, conn, debug_mode=DEBUG_MODE, warning_mo
             track_buffer.clear()  # Clear the buffer after processing
 
         if debug_mode:
-            print(f"[DEBUG] Finished processing tracks for playlist ID: {playlist_id}")
+            gui.log(f"Finished processing tracks for playlist ID: {playlist_id}", level="info")
     else:
         if debug_mode or error_mode:
-            print(f"[ERROR] Failed to fetch tracks for playlist ID {playlist_id}. Status Code: {tracks_response.status_code}")
+            gui.status(f"Failed to fetch tracks for playlist ID {playlist_id}. Status Code: {tracks_response.status_code}", status="error")
             if tracks_response:
-                print(f"[ERROR] Response: {tracks_response.text}")
+                gui.status(f"Response: {tracks_response.text}", status="error")

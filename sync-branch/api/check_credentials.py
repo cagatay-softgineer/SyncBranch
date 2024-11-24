@@ -6,6 +6,9 @@ from datetime import datetime
 from prettytable import PrettyTable
 from dotenv import load_dotenv
 import os
+from cmd_gui_kit import CmdGUI
+
+gui = CmdGUI()
 
 load_dotenv()
 
@@ -78,7 +81,7 @@ def check_api_status(access_token, commands, max_retries=1):
                 retry_after = int(response.headers.get("Retry-After", 1))
                 retry_time = datetime.utcfromtimestamp(time.time() + retry_after).strftime('%Y-%m-%d %H:%M:%S')
                 status_results[command] = f"Rate-Limited; Retry at {retry_time}"
-                print(f"[WARNING] {command} is rate-limited. Retrying after {retry_after} seconds.")
+                gui.log(f"{command} is rate-limited. Retrying after {retry_after} seconds.", level="warn")
                 time.sleep(retry_after)
                 retries += 1
             else:
@@ -135,7 +138,7 @@ def check_credentials_status(credentials=CREDENTIALS, commands=API_COMMANDS, out
             row = [command] + [results_dict[cred["client_id"]].get(command, "N/A") for cred in credentials] + [results_dict["SPOTIFY"].get(command, "N/A")]
             table.add_row(row)
 
-        print(f"[INFO]\n{table}")
+        gui.log(f"\n{table}",level="info")
 
     # Write the JSON output to a file
     with open(output_file, "w") as f:

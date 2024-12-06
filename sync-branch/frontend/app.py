@@ -299,49 +299,18 @@ def artists():
         error_message = f"Database error: {e}"
         return render_template('error.html', error_message=error_message)
 
-@app.route('/user-personal-type/<display_name>')
-def show_user_personal_type(display_name):
+@app.route('/user-personal-type/<user_id>')
+def show_user_personal_type(user_id):
     try:
         conn = pyodbc.connect(DB_CONNECTION_STRING)
         cursor = conn.cursor()
-        cursor.execute("""
-        SELECT 
-            u.user_id,
-            u.display_name,
-            CAST(u.profile_image_url AS NVARCHAR(MAX)) AS profile_image_url,
-            uc.personal_type,
-            CAST(pt.type_description AS NVARCHAR(MAX)) AS type_description,
-            CAST(pt.feature_profile_high AS NVARCHAR(MAX)) AS feature_profile_high,
-            CAST(pt.feature_profile_medium AS NVARCHAR(MAX)) AS feature_profile_medium,
-            CAST(pt.feature_profile_low AS NVARCHAR(MAX)) AS feature_profile_low,
-            COUNT(DISTINCT up.playlist_id) AS playlist_count,
-            ISNULL(ut.total_tracks, 0) AS total_tracks
-        FROM 
-            Users u
-        JOIN 
-            UserClusters uc ON u.user_id = uc.user_id
-        JOIN 
-            Personal_Types pt ON uc.personal_type = pt.personal_type
-        LEFT JOIN 
-            User_Playlists up ON u.user_id = up.user_id
-        LEFT JOIN 
-            UserTotalTracks ut ON u.user_id = ut.user_id
-        WHERE 
-            u.display_name = ?
-        GROUP BY 
-            u.user_id, 
-            u.display_name, 
-            CAST(u.profile_image_url AS NVARCHAR(MAX)), 
-            uc.personal_type, 
-            CAST(pt.type_description AS NVARCHAR(MAX)), 
-            CAST(pt.feature_profile_high AS NVARCHAR(MAX)), 
-            CAST(pt.feature_profile_medium AS NVARCHAR(MAX)), 
-            CAST(pt.feature_profile_low AS NVARCHAR(MAX)), 
-            ut.total_tracks;
-        """, (display_name,))
+        cursor.execute(f"""
+SELECT * 
+FROM GetUserProfile('{user_id}');
+        """)
         data = cursor.fetchone()
         if not data:
-            return render_template('error.html', error_message=f"No personal type information found for user: {display_name}")
+            return render_template('error.html', error_message=f"No personal type information found for user: {user_id}")
         headers = [column[0] for column in cursor.description]
         user_personal_type_info = dict(zip(headers, data))
         cursor.close()
@@ -421,46 +390,11 @@ def user_profile(user_id):
 
 
         # Fetch top 5 matches
-        cursor.execute("""
-        WITH RankedMatches AS (
-    SELECT 
-        CASE WHEN u1.user_id = ? THEN u2.user_id ELSE u1.user_id END AS match_user_id,
-        CASE WHEN u1.user_id = ? THEN u2.display_name ELSE u1.display_name END AS match_user_name,
-        CASE WHEN u1.user_id = ? THEN u2.profile_image_url ELSE u1.profile_image_url END AS match_user_image,
-        upmD.final_match_rate_percentage,
-        CASE WHEN u1.user_id = ? THEN uaf2.personal_type ELSE uaf1.personal_type END AS match_user_type,
-        ROW_NUMBER() OVER (
-            PARTITION BY 
-                CASE WHEN u1.user_id = ? THEN u2.user_id ELSE u1.user_id END
-            ORDER BY 
-                upmD.final_match_rate_percentage DESC
-        ) AS rn
-    FROM 
-        UserPairMatchRateWithDisplayNamesTable upmD
-    JOIN 
-        Users u1 ON upmD.user_id1 = u1.user_id
-    JOIN 
-        Users u2 ON upmD.user_id2 = u2.user_id
-    JOIN 
-        UserClusters uaf1 ON u1.user_id = uaf1.user_id
-    JOIN 
-        UserClusters uaf2 ON u2.user_id = uaf2.user_id
-    WHERE 
-        u1.user_id = ? OR u2.user_id = ?
-)
-SELECT TOP 5
-    match_user_id,
-    match_user_name,
-    match_user_image,
-    final_match_rate_percentage,
-    match_user_type
-FROM 
-    RankedMatches
-WHERE 
-    rn = 1
-ORDER BY 
-    final_match_rate_percentage DESC;
-""", (user_id, user_id, user_id, user_id, user_id, user_id, user_id))
+        cursor.execute(f"""
+SELECT TOP 5 * 
+FROM AllMatches('{user_id}')
+ORDER BY final_match_rate_percentage DESC;;
+""")
         top_matches = cursor.fetchall()
         top_matches = [
             {
@@ -468,51 +402,17 @@ ORDER BY
             "match_user_name": match[1],
             "match_user_image": match[2] or get_gender_icon(match[1]) or'/static/icons/default_user.png',
             "final_match_rate_percentage": match[3],
-            "match_user_type": match[4]
+            "match_user_type": match[4],
+            "match_type": match[5]  # Add match_type to the dictionary
             } for match in top_matches
         ]
 
-        # Fetch top 100 matches
-        cursor.execute("""
-        WITH RankedMatches AS (
-    SELECT 
-        CASE WHEN u1.user_id = ? THEN u2.user_id ELSE u1.user_id END AS match_user_id,
-        CASE WHEN u1.user_id = ? THEN u2.display_name ELSE u1.display_name END AS match_user_name,
-        CASE WHEN u1.user_id = ? THEN u2.profile_image_url ELSE u1.profile_image_url END AS match_user_image,
-        upmD.final_match_rate_percentage,
-        CASE WHEN u1.user_id = ? THEN uaf2.personal_type ELSE uaf1.personal_type END AS match_user_type,
-        ROW_NUMBER() OVER (
-            PARTITION BY 
-                CASE WHEN u1.user_id = ? THEN u2.user_id ELSE u1.user_id END
-            ORDER BY 
-                upmD.final_match_rate_percentage DESC
-        ) AS rn
-    FROM 
-        UserPairMatchRateWithDisplayNamesTable upmD
-    JOIN 
-        Users u1 ON upmD.user_id1 = u1.user_id
-    JOIN 
-        Users u2 ON upmD.user_id2 = u2.user_id
-    JOIN 
-        UserClusters uaf1 ON u1.user_id = uaf1.user_id
-    JOIN 
-        UserClusters uaf2 ON u2.user_id = uaf2.user_id
-    WHERE 
-        u1.user_id = ? OR u2.user_id = ?
-)
-SELECT
-    match_user_id,
-    match_user_name,
-    match_user_image,
-    final_match_rate_percentage,
-    match_user_type
-FROM 
-    RankedMatches
-WHERE 
-    rn = 1
-ORDER BY 
-    final_match_rate_percentage DESC;
-""", (user_id, user_id, user_id, user_id, user_id, user_id, user_id))
+        # Fetch all matches
+        cursor.execute(f"""
+SELECT * 
+FROM AllMatches('{user_id}')
+ORDER BY final_match_rate_percentage DESC;
+""")
         all_matches = cursor.fetchall()
         all_matches = [
             {

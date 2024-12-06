@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/x-icon" href="/static/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
+    <title>Friendship Requests</title>
+</head>
+<body>
+    <div class="content-container">
+        <div class="content main-content">
+    <h1>Friendship Requests</h1>
+    <form action="/friendship" method="POST">
+        <label for="receiver_username">Username:</label><br>
+        <input type="text" name="receiver_username" id="receiver_username" required><br><br>
+        <button type="submit">Send Friend Request</button>
+    </form>
+    <h2>Pending Requests:</h2>
+    <ul>
+        {% for req in requests %}
+        <li>{{ req.sender_username }} - Status: {{ req.status }}</li>
+        {% endfor %}
+    </ul>
+</div></div>
+</body>
+</html>

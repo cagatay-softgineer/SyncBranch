@@ -170,3 +170,5 @@ auth_tokens.json
 sync-branch/api/__pycache__/
 gender_api
 sync-branch/SavedTracks
+Temp
+logs

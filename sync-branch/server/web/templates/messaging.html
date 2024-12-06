@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/x-icon" href="/static/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
+    <title>Messages</title>
+</head>
+<body>
+    <div class="content-container">
+        <div class="content main-content">
+    <h1>Messages</h1>
+    <form action="/messaging" method="POST">
+        <label for="recipient">Recipient:</label><br>
+        <input type="text" name="recipient" id="recipient" required><br><br>
+        <label for="message">Message:</label><br>
+        <textarea name="message" id="message" required></textarea><br><br>
+        <button type="submit">Send Message</button>
+    </form>
+    <h2>Received Messages:</h2>
+    <ul>
+        {% for msg in messages %}
+        <li>{{ msg.message }} - From <strong>{{ msg.user_id }}</strong>  At ({{ msg.timestamp }})</li>
+        {% endfor %}
+    </ul>
+</div></div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/x-icon" href="/static/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
+    <title>Profile</title>
+</head>
+<body>
+    <div class="content-container">
+        <div class="content main-content">
+    <h1>Your Profile</h1>
+    <p><strong>Username:</strong> {{ profile.username }}</p>
+    <p><strong>Email:</strong> {{ profile.email }}</p>
+    <p><strong>Spotify User ID:</strong> {{ profile.spotify_user_id }}</p>
+    <form action="/profile/update" method="POST">
+        <label for="email">Update Email:</label><br>
+        <input type="email" name="email" id="email" value="{{ profile.email }}" required><br><br>
+        <input type="spotify_user_id" name="spotify_user_id" id="spotify_user_id" value="{{ profile.spotify_user_id }}" required><br><br>
+        <button type="submit">Update Profile</button>
+    </form>
+</div></div>
+</body>
+</html>

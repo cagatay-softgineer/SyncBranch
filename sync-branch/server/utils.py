@@ -2,17 +2,14 @@ import pyodbc
 import logging
 from dotenv import load_dotenv
 import os
-from datetime import datetime
 from cmd_gui_kit import CmdGUI
 
 # Initialize CmdGUI for visual feedback
 gui = CmdGUI()
 
 # Logging setup
-LOG_DIR = "logs"
-os.makedirs(LOG_DIR, exist_ok=True)
-log_file = os.path.join(LOG_DIR, f"{datetime.now().strftime('%Y-%m-%d')}.log")
-logging.basicConfig(level=logging.INFO, filename=log_file, filemode="a", format="%(asctime)s - %(levelname)s - %(message)s")
+LOG_DIR = "logs/endpoint.log"
+logging.basicConfig(level=logging.INFO, filename=LOG_DIR, filemode="a", format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 load_dotenv()

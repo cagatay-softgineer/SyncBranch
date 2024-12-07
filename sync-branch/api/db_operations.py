@@ -3,6 +3,36 @@ import pyodbc
 import sys
 from dateutil import parser
 from cmd_gui_kit import CmdGUI
+import logging
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Setup logging
+LOG_FILE = "logs/db.log"
+
+# Create a logger
+logger = logging.getLogger("SyncBranchLogger")
+logger.setLevel(logging.DEBUG)
+
+# Create file handler
+file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
+
+# Create console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+# Create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+logger.propagate = False
 
 gui = CmdGUI()
 
@@ -10,6 +40,10 @@ gui = CmdGUI()
 DEBUG_MODE = '--debug' in sys.argv
 WARNING_MODE = '--warning' in sys.argv
 ERROR_MODE = '--error' in sys.argv
+
+DEBUG_MODE = os.getenv("DEBUG_MODE")
+if DEBUG_MODE == "True":
+    DEBUG_MODE = True
 
 def check_user_exists(user_id, cursor):
     """
@@ -47,9 +81,11 @@ def insert_user_data(user_id, headers, cursor, conn, debug_mode=DEBUG_MODE, warn
         conn.commit()
         if debug_mode:
             gui.log(f"Inserted data for user {user_id}", level="info")
+            logger.info(f"Inserted data for user {user_id}")
     else:
         if debug_mode or error_mode:
             gui.status(f"Failed to fetch data for user {user_id}", status="error")
+            logger.error(f"Failed to fetch data for user {user_id}")
             
 def check_and_insert_playlist(playlist, user_id, cursor, conn, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE):
     """
@@ -64,11 +100,13 @@ def check_and_insert_playlist(playlist, user_id, cursor, conn, debug_mode=DEBUG_
     if not playlist:
         if debug_mode or warning_mode:
             gui.log(f"Playlist data is None or empty for user {user_id}. Skipping.", level="warn")
+            logger.info(f"Playlist data is None or empty for user {user_id}. Skipping.")
         return
     
     if playlist is None:
         if debug_mode or warning_mode:
             gui.log(f"Playlist data is None or empty for user {user_id}. Skipping.", level="warn")
+            logger.info(f"Playlist data is None or empty for user {user_id}. Skipping.")
         return
 
     try:
@@ -77,6 +115,7 @@ def check_and_insert_playlist(playlist, user_id, cursor, conn, debug_mode=DEBUG_
         if playlist.get("id") is None:
             if debug_mode or warning_mode:
                 gui.log(f"Playlist data is missing 'id' for user {user_id}. Skipping.", level="warn")
+                logger.info(f"Playlist data is missing 'id' for user {user_id}. Skipping.")
             return
         
         # Validate playlist fields
@@ -92,11 +131,13 @@ def check_and_insert_playlist(playlist, user_id, cursor, conn, debug_mode=DEBUG_
         if not playlist_id or not playlist_name:
             if debug_mode or warning_mode:
                 gui.log(f"Playlist data is missing essential fields for user {user_id}. Skipping.", level="warn")
+                logger.info(f"Playlist data is missing essential fields for user {user_id}. Skipping.")
             return
 
         # Log details of the playlist for debugging
         if debug_mode:
             gui.log(f"Processing playlist: {playlist_name} (ID: {playlist_id})",level="info")
+            logger.info(f"Processing playlist: {playlist_name} (ID: {playlist_id})")
 
         # Insert playlist if not exists
         cursor.execute("SELECT 1 FROM Playlists WHERE playlist_id = ?", (playlist_id,))
@@ -108,6 +149,7 @@ def check_and_insert_playlist(playlist, user_id, cursor, conn, debug_mode=DEBUG_
             conn.commit()
             if debug_mode:
                 gui.log(f"Inserted new playlist: {playlist_name} (ID: {playlist_id})",level="info")
+                logger.info(f"Inserted new playlist: {playlist_name} (ID: {playlist_id})")
 
         # Associate user with playlist in User_Playlists table
         cursor.execute("SELECT 1 FROM User_Playlists WHERE user_id = ? AND playlist_id = ?", (user_id, playlist_id))
@@ -116,13 +158,16 @@ def check_and_insert_playlist(playlist, user_id, cursor, conn, debug_mode=DEBUG_
             conn.commit()
             if debug_mode:
                 gui.log(f"Associated user {user_id} with playlist {playlist_id}",level="info")
+                logger.info(f"Associated user {user_id} with playlist {playlist_id}")
 
     except (AttributeError, KeyError, TypeError) as e:
         if debug_mode or error_mode:
             gui.status(f"Data issue encountered for user {user_id} while processing playlist {playlist.get('name', 'Unknown')}: {e}",status="error")
+            logger.error(f"Data issue encountered for user {user_id} while processing playlist {playlist.get('name', 'Unknown')}: {e}")
     except pyodbc.Error as db_err:
         if debug_mode or error_mode:
             gui.status(f"Database error for user {user_id}: {db_err}",status="error")
+            logger.error(f"Database error for user {user_id}: {db_err}")
                     
 def fetch_and_insert_audio_features(track_ids, headers, cursor, conn, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE):
     """
@@ -138,6 +183,7 @@ def fetch_and_insert_audio_features(track_ids, headers, cursor, conn, debug_mode
     if not track_ids:
         if debug_mode:
             gui.log("No track IDs to process.", level="info")
+            logger.info("No track IDs to process.")
         return  # No track IDs to process
 
     # Make a request for audio features in bulk (up to 100 track IDs)
@@ -146,7 +192,9 @@ def fetch_and_insert_audio_features(track_ids, headers, cursor, conn, debug_mode
 
     if debug_mode:
         gui.log(f"Requesting audio features for {len(track_ids)} track IDs.", level="info")
+        logger.info(f"Requesting audio features for {len(track_ids)} track IDs.")
         gui.log(f"Request URL: {audio_features_url}", level="info")
+        logger.info(f"Request URL: {audio_features_url}")
 
     response = make_request(audio_features_url, "Get Audio Features Batch")
 
@@ -155,12 +203,14 @@ def fetch_and_insert_audio_features(track_ids, headers, cursor, conn, debug_mode
             audio_features_list = response.json().get("audio_features", [])
             if debug_mode:
                 gui.log(f"Received audio features for {len(audio_features_list)} tracks.", level="info")
+                logger.info(f"Received audio features for {len(audio_features_list)} tracks.")
 
             for audio_features_data in audio_features_list:
                 if audio_features_data:  # Ensure data is not None
                     track_id = audio_features_data.get("id")
                     if debug_mode:
                         gui.log(f"Inserting audio features for track ID: {track_id}", level="info")
+                        logger.info(f"Inserting audio features for track ID: {track_id}")
                     cursor.execute("""
                     INSERT INTO Audio_Features (track_id, acousticness, danceability, energy, instrumentalness, liveness, loudness, speechiness, valence, tempo, track_key, mode, time_signature)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -173,18 +223,23 @@ def fetch_and_insert_audio_features(track_ids, headers, cursor, conn, debug_mode
             conn.commit()
             if debug_mode:
                 gui.log(f"Committed audio features for batch of {len(track_ids)} tracks.", level="info")
+                logger.info(f"Committed audio features for batch of {len(track_ids)} tracks.")
         else:
             if debug_mode or error_mode:
                 gui.status(f"Failed to fetch audio features. Status Code: {response.status_code}", status="error")
+                logger.error(f"Failed to fetch audio features. Status Code: {response.status_code}")
                 gui.status(f"Response: {response.text}", status="error")
+                logger.error(f"Response: {response.text}")
     else:
         if debug_mode or error_mode:
             gui.status("No response received for the request.", status="error")
+            logger.error("No response received for the request.")
 
 def check_and_insert_track(track_item, playlist_id, headers, cursor, conn, track_buffer, max_buffer_size=100, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE):
     if not track_item or 'track' not in track_item or track_item['track'] is None:
         if debug_mode or warning_mode:
             gui.log("Track data is None or unavailable, skipping this track.", level="warn")
+            logger.info("Track data is None or unavailable, skipping this track.")
         return  # Skip if the track data is invalid
 
     track_info = track_item["track"]
@@ -195,11 +250,13 @@ def check_and_insert_track(track_item, playlist_id, headers, cursor, conn, track
     if not track_id:
         if debug_mode or warning_mode:
             gui.log("Track ID is missing, skipping.", level="warn")
+            logger.info("Track ID is missing, skipping.")
         return  # Skip tracks with no valid ID
 
     if not album_id:
         if debug_mode or warning_mode:
             gui.log(f"Skipping track {track_id} due to missing album_id.", level="warn")
+            logger.info(f"Skipping track {track_id} due to missing album_id.")
         return  # Skip this track if album_id is missing
 
     # Insert album into Albums table if not exists
@@ -213,6 +270,7 @@ def check_and_insert_track(track_item, playlist_id, headers, cursor, conn, track
             except ValueError:
                 if debug_mode or warning_mode:
                     gui.log(f"Invalid release date format for album {album_id}.", level="warn")
+                    logger.info(f"Invalid release date format for album {album_id}.")
         
         cursor.execute("""
         INSERT INTO Albums (album_id, name, release_date, total_tracks, album_type, album_href, uri)

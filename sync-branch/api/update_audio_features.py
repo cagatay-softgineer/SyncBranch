@@ -5,6 +5,32 @@ import sys
 import os
 from dotenv import load_dotenv
 from cmd_gui_kit import CmdGUI
+import logging
+
+# Setup logging
+LOG_FILE = "logs/update_audio_features.log"
+
+# Create a logger
+logger = logging.getLogger("SyncBranchLogger")
+logger.setLevel(logging.DEBUG)
+
+# Create file handler
+file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
+
+# Create console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+# Create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+logger.propagate = False
 
 gui = CmdGUI()
 
@@ -14,6 +40,10 @@ WARNING_MODE = '--warning' in sys.argv
 ERROR_MODE = '--error' in sys.argv
 
 load_dotenv()
+
+DEBUG_MODE = os.getenv("DEBUG_MODE")
+if DEBUG_MODE == "True":
+    DEBUG_MODE = True
 
 # Database connection settings
 DB_HOST = os.getenv("DB_HOST")
@@ -59,6 +89,7 @@ def check_and_update_audio_features(debug_mode=DEBUG_MODE, warning_mode=WARNING_
 
     if debug_mode:
         gui.log(f"Found {len(missing_audio_features_tracks)} tracks missing audio features.", level="info")
+        logger.info(f"Found {len(missing_audio_features_tracks)} tracks missing audio features.")
 
     # Process tracks in batches to avoid rate limiting
     batch_size = 100
@@ -69,6 +100,7 @@ def check_and_update_audio_features(debug_mode=DEBUG_MODE, warning_mode=WARNING_
     cursor.close()
     conn.close()
     gui.status("Finished updating missing audio features.", status="success")
+    logger.info("Finished updating missing audio features.")
 
 def main():
     # Run the audio feature check and update function

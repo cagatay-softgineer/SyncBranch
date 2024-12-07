@@ -8,6 +8,32 @@ import sys
 from dotenv import load_dotenv
 import os
 from cmd_gui_kit import CmdGUI
+import logging
+
+# Setup logging
+LOG_FILE = "logs/main.log"
+
+# Create a logger
+logger = logging.getLogger("SyncBranchLogger")
+logger.setLevel(logging.DEBUG)
+
+# Create file handler
+file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
+
+# Create console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+# Create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+logger.propagate = False
 
 gui = CmdGUI()
 
@@ -17,6 +43,10 @@ WARNING_MODE = '--warning' in sys.argv
 ERROR_MODE = '--error' in sys.argv
 
 load_dotenv()
+
+DEBUG_MODE = os.getenv("DEBUG_MODE")
+if DEBUG_MODE == "True":
+    DEBUG_MODE = True
 
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
@@ -37,28 +67,32 @@ def process_user_data(user_id, conn, cursor, debug_mode=DEBUG_MODE, warning_mode
         if not check_user_exists(user_id, cursor):
             if debug_mode:
                 gui.log(f"Inserting data for new user: {user_id}", level="info")
+                logger.info(f"Inserting data for new user: {user_id}")
             try:
                 insert_user_data(user_id, headers, cursor, conn)
             except AttributeError as e:
                 if debug_mode or error_mode:
-                    gui.status(f"AttributeError encountered for user {user_id} during data insertion: {e}",status="error")
+                    gui.status(f"AttributeError encountered for user {user_id} during data insertion: {e}", status="error")
+                    logger.error(f"AttributeError encountered for user {user_id} during data insertion: {e}")
                 # Continue with processing playlists even if an error occurred
 
         # Process playlists for the user
         if debug_mode:
             gui.log(f"Handling playlists for user: {user_id}", level="info")
+            logger.info(f"Handling playlists for user: {user_id}")
         try:
             handle_playlists(user_id, cursor, conn)
             return True  # Indicate successful processing
         except AttributeError as e:
             if debug_mode or error_mode:
-                gui.status(f"AttributeError encountered for user {user_id} during playlist handling: {e}",status="error")
-            # Continue to the next step even if an error occurred
+                gui.status(f"AttributeError encountered for user {user_id} during playlist handling: {e}", status="error")
+                logger.error(f"AttributeError encountered for user {user_id} during playlist handling: {e}")
             return False
 
     except Exception as e:
         if debug_mode or error_mode:
-            gui.status(f"General error processing user {user_id}: {e}",status="error")
+            gui.status(f"General error processing user {user_id}: {e}", status="error")
+            logger.error(f"General error processing user {user_id}: {e}")
         return False
 
 # Update processed status in CSV file
@@ -84,9 +118,11 @@ def main(CSV_path, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=
         cursor = conn.cursor()
         if debug_mode:
             gui.status("Connected to the database successfully.", status="success")
+            logger.info("Connected to the database successfully.")
     except pyodbc.Error as db_err:
         if debug_mode or error_mode:
             gui.status(f"Database connection failed: {db_err}", status="error")
+            logger.error(f"Database connection failed: {db_err}")
         return
 
     # Read user IDs from CSV file
@@ -99,7 +135,8 @@ def main(CSV_path, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=
 
                 # Process only users who have not been processed
                 if processed == '0':
-                    gui.log(f"Processing user: {user_id}",level="info")
+                    gui.log(f"Processing user: {user_id}", level="info")
+                    logger.info(f"Processing user: {user_id}")
                     success = process_user_data(user_id, conn, cursor)
 
                     # Mark user as processed if successful
@@ -108,23 +145,27 @@ def main(CSV_path, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=
 
     except FileNotFoundError:
         if debug_mode or error_mode:
-            gui.status(f"CSV file {CSV_path} not found.",status="error")
+            gui.status(f"CSV file {CSV_path} not found.", status="error")
+            logger.error(f"CSV file {CSV_path} not found.")
     except KeyError as key_err:
         if debug_mode or warning_mode:
-            gui.status(f"CSV file format error: Missing key {key_err}",status="warning")
+            gui.status(f"CSV file format error: Missing key {key_err}", status="warning")
+            logger.warning(f"CSV file format error: Missing key {key_err}")
     except Exception as e:
         if debug_mode or error_mode:
-            gui.status(f"An error occurred while reading the CSV file: {e}",status="error")
+            gui.status(f"An error occurred while reading the CSV file: {e}", status="error")
+            logger.error(f"An error occurred while reading the CSV file: {e}")
     finally:
-        # Close the database connection
         cursor.close()
         conn.close()
         if debug_mode:
-            gui.status("Database connection closed.", status="info") 
+            gui.status("Database connection closed.", status="info")
+            logger.info("Database connection closed.")
 
 if __name__ == "__main__":
     CSV_path = "user_ids.csv"
     start_time = time.time()
     main(CSV_path)
     end_time = time.time()
-    gui.status(f"Data for all users saved to the database.\nExecution time: {end_time - start_time:.2f} seconds.",status="success")
+    gui.status(f"Data for all users saved to the database.\nExecution time: {end_time - start_time:.2f} seconds.", status="success")
+    logger.info(f"Data for all users saved to the database.\nExecution time: {end_time - start_time:.2f} seconds.")

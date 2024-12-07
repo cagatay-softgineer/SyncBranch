@@ -7,6 +7,10 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 import os 
 from dotenv import load_dotenv
+from cmd_gui_kit import CmdGUI  # Import CmdGUI for visual feedback
+
+# Initialize CmdGUI for visual feedback
+gui = CmdGUI()
 
 load_dotenv()
 
@@ -34,10 +38,13 @@ def add_spotify_dashboard_user(fullname, email):
     
     try:
         # Step 1: Open the Spotify Developer Dashboard login page
+        gui.spinner(duration=3, message="Opening Spotify login page...")
         driver.get("https://accounts.spotify.com/en/login")
         
         # Step 2: Log in using the provided selectors
+        gui.spinner(duration=3, message="Logging in...")
         username_field = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, "login-username")))
+
         password_field = driver.find_element(By.ID, "login-password")
         login_button = driver.find_element(By.ID, "login-button")
         
@@ -52,13 +59,14 @@ def add_spotify_dashboard_user(fullname, email):
         # Check if redirected to the status page, which indicates successful login
         current_url = driver.current_url
         if "status" in current_url:
-            print("Login successful. Redirecting to the dashboard...")
+            gui.status("Login successful. Redirecting to the dashboard...", status="info")
             driver.get("https://developer.spotify.com/dashboard/d863b0ec1be24fafa4f4dc4696ea26b1/users")
         else:
-            print("Login unsuccessful or unexpected redirect. Exiting.")
+            gui.status("Login unsuccessful or unexpected redirect. Exiting.", status="error")
             return
 
         # Step 4: Wait until the form fields are loaded
+        gui.spinner(duration=3, message="Loading user addition form...")
         name_field = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "name")))
         email_field = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "email")))
 
@@ -67,15 +75,21 @@ def add_spotify_dashboard_user(fullname, email):
         email_field.send_keys(email)
         
         # Submit the form by clicking the "Add user" button
+        gui.spinner(duration=3, message="Submitting the form...")
         add_user_button = driver.find_element(By.XPATH, "//button[@type='submit' and contains(@class, 'Button-sc-qlcn5g-0')]")
         add_user_button.click()
         
         # Optional: Wait to confirm user is added
         time.sleep(5)
+        gui.status("User added successfully!", status="success")
 
+    except Exception as e:
+        gui.status(f"An error occurred: {e}", status="error")
+    
     finally:
         # Close the WebDriver
+        gui.status("Closing the browser...", status="info")
         driver.quit()
         
 # Example usage with arguments
-add_spotify_dashboard_user("username", "example123@mail.com")
+add_spotify_dashboard_user("Cagatay Alkan", "cagatayalkan333@hotmail.com")

@@ -7,6 +7,33 @@ from dotenv import load_dotenv
 import os
 import sys
 from cmd_gui_kit import CmdGUI
+import logging
+
+
+# Setup logging
+LOG_FILE = "logs/get_recent.log"
+
+# Create a logger
+logger = logging.getLogger("SyncBranchLogger")
+logger.setLevel(logging.DEBUG)
+
+# Create file handler
+file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
+
+# Create console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+# Create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+logger.propagate = False
 
 gui = CmdGUI()
 
@@ -22,6 +49,10 @@ ERROR_MODE = '--error' in sys.argv
 ######
 
 load_dotenv()
+
+DEBUG_MODE = os.getenv("DEBUG_MODE")
+if DEBUG_MODE == "True":
+    DEBUG_MODE = True
 
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
@@ -90,6 +121,7 @@ def refresh_access_token(refresh_token):
             json.dump([new_token_entry], f, indent=4)  # Save as a list with the latest token
         if DEBUG_MODE:
             gui.log("Access token refreshed successfully.", level="info")
+            logger.info("Access token refreshed successfully.")
         return new_access_token
     else:
         raise Exception(f"[ERROR] Failed to refresh token: {response.status_code} - {response.text}")
@@ -120,6 +152,7 @@ def check_and_insert_user(user_id, access_token):
         else:
             if DEBUG_MODE or ERROR_MODE:
                 gui.log(f"Failed to fetch user profile: {response.status_code} - {response.text}", level="warn")
+                logger.info(f"Failed to fetch user profile: {response.status_code} - {response.text}")
             return False
     cursor.close()
     conn.close()
@@ -149,6 +182,7 @@ def check_and_insert_album(album_id, access_token):
         else:
             if DEBUG_MODE or ERROR_MODE:
                 gui.log(f"Failed to fetch album data for album_id {album_id}: {response.status_code} - {response.text}", level="warn")
+                logger.info(f"Failed to fetch album data for album_id {album_id}: {response.status_code} - {response.text}")
             return False
     cursor.close()
     conn.close()
@@ -165,6 +199,7 @@ def check_and_insert_track(track_id, album_id, access_token):
         if not check_and_insert_album(album_id, access_token):
             if DEBUG_MODE or ERROR_MODE:
                 gui.log(f"Failed to insert album for track {track_id}. Aborting track insertion.", level="warn")
+                logger.info(f"Failed to insert album for track {track_id}. Aborting track insertion.")
             return False
 
         url = f"https://api.spotify.com/v1/tracks/{track_id}"
@@ -184,6 +219,7 @@ def check_and_insert_track(track_id, album_id, access_token):
         else:
             if DEBUG_MODE or ERROR_MODE:
                 gui.log(f"Failed to fetch track data for track_id {track_id}: {response.status_code} - {response.text}", level="warn")
+                logger.info(f"Failed to fetch track data for track_id {track_id}: {response.status_code} - {response.text}")
             return False
     cursor.close()
     conn.close()
@@ -211,13 +247,16 @@ def insert_recently_played_tracks():
         if not is_token_valid(access_token):
             if DEBUG_MODE or WARNING_MODE:
                 gui.log(f"Access token for user {user_id} is invalid or expired.", level="warn")
+                logger.info(f"Access token for user {user_id} is invalid or expired.")
             continue
         
         gui.log(f"Processing recently played tracks for user {user_id}.", level="info")
+        logger.info(f"Processing recently played tracks for user {user_id}.")
         
         if not check_and_insert_user(user_id, access_token):
             if DEBUG_MODE or WARNING_MODE:
                 gui.log(f"Failed to insert user {user_id}. Aborting.", level="warn")
+                logger.info(f"Failed to insert user {user_id}. Aborting.")
             continue
     
         tracks = get_recently_played_tracks(access_token)
@@ -242,11 +281,13 @@ def insert_recently_played_tracks():
                     # Handle duplicate entry case
                     if DEBUG_MODE:
                         gui.log(f"[DEBUG] Duplicate entry for user {user_id}, track {track_id} at {played_at}. Skipping.", level="info")
+                        logger.info(f"[DEBUG] Duplicate entry for user {user_id}, track {track_id} at {played_at}. Skipping.")
                     conn.rollback()  # Rollback if insertion fails
 
         cursor.close()
         conn.close()
         gui.log(f"Recently played tracks stored successfully for user {user_id}.", level="info")
+        logger.info(f"Recently played tracks stored successfully for user {user_id}.")
 
 
 # Main function
@@ -255,6 +296,7 @@ def main():
         insert_recently_played_tracks()
     except Exception as e:
         gui.status(f"Error: {e}", status="error")
+        logger.error(f"Error: {e}")
 
 if __name__ == "__main__":
     main()

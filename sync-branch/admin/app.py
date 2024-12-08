@@ -225,7 +225,7 @@ def view_log_file(filename):
         # Get query parameters for filtering and pagination
         query = request.args.get("query", "").lower()  # Filter query string
         start = int(request.args.get("start", 0))  # Pagination start
-        limit = int(request.args.get("limit", 50))  # Pagination limit
+        limit = int(request.args.get("limit", 250))  # Pagination limit
 
         # Apply filter if query is provided
         if query:

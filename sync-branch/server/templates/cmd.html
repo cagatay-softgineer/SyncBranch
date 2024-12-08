@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Command Executor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .terminal {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 10px;
+            border-radius: 5px;
+            height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap; /* Preserve whitespace and word wrapping */
+            border: 1px solid #444;
+        }
+        .btn-save {
+            margin-top: 10px;
+            background-color: #28a745;
+        }
+        .btn-save:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>Run Command</h1>
+    <form id="commandForm">
+        <input type="text" id="command" name="command" placeholder="Enter command" required>
+        <button type="submit">Run</button>
+    </form>
+    <h2>Output:</h2>
+    <div class="terminal" id="command-output"></div>
+    <button class="btn-save" id="save-command-output">Save Output</button>
+
+    <script>
+        // Handle command execution
+        document.getElementById('commandForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const command = document.getElementById('command').value;
+            const outputElement = document.getElementById('command-output');
+            outputElement.textContent = ''; // Clear previous output
+        
+            const response = await fetch('/commands/run_command', {
+                method: 'POST',
+                body: new URLSearchParams({ command }),
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+        
+            const data = await response.json();
+            if (data.success) {
+                // Extract and render the output field
+                outputElement.textContent = data.output.replace(/\\n/g, '\n');
+            } else {
+                outputElement.textContent = `Error: ${data.error}`;
+            }
+        });
+
+        // Handle saving command output
+        document.getElementById('save-command-output').addEventListener('click', () => {
+            const content = document.getElementById('command-output').textContent;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'command_output.txt';
+            a.click();
+        });
+    </script>
+</body>
+</html>

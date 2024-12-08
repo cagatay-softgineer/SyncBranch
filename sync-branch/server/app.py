@@ -8,6 +8,7 @@ from auth import auth_bp
 from profiles import profile_bp
 from messaging import messaging_bp
 from friendship import friendship_bp
+from commands import commands_bp
 from api import api_bp
 from dotenv import load_dotenv
 import os
@@ -53,12 +54,17 @@ def friendship_healthcheck():
 def api_healthcheck():
     return jsonify({"status": "ok", "service": "API Service"}), 200
 
+@commands_bp.route("/healthcheck", methods=["GET"])
+def commands_healthcheck():
+    return jsonify({"status": "ok", "service": "Console Service"}), 200
+
 # Register Blueprints
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(profile_bp, url_prefix="/profile")
 app.register_blueprint(messaging_bp, url_prefix="/messaging")
 app.register_blueprint(friendship_bp, url_prefix="/friendship")
 app.register_blueprint(api_bp, url_prefix="/api")
+app.register_blueprint(commands_bp, url_prefix="/commands")
 app.register_blueprint(swaggerui_blueprint, url_prefix=app.config['SWAGGER_URL'])
 
 # Central Healthcheck for All Services
@@ -69,7 +75,8 @@ def overall_healthcheck():
         {"name": "Profile Service", "url": "/profile/healthcheck"},
         {"name": "Messaging Service", "url": "/messaging/healthcheck"},
         {"name": "Friendship Service", "url": "/friendship/healthcheck"},
-        {"name": "API Service", "url": "/api/healthcheck"}
+        {"name": "API Service", "url": "/api/healthcheck"},
+        {"name": "Console Service", "url": "/commands/healthcheck"}
     ]
     statuses = []
     for service in services:

@@ -2,15 +2,16 @@ from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_swagger_ui import get_swaggerui_blueprint
-import requests
 import logging
 from auth import auth_bp
 from profiles import profile_bp
 from messaging import messaging_bp
 from friendship import friendship_bp
 from commands import commands_bp
+from admin import admin_bp
 from api import api_bp
 from dotenv import load_dotenv
+import argparse
 import os
 
 load_dotenv()
@@ -36,26 +37,32 @@ swaggerui_blueprint = get_swaggerui_blueprint(
 # Add /healthcheck to each blueprint
 @auth_bp.route("/healthcheck", methods=["GET"])
 def auth_healthcheck():
+    logger.info("Auth Service healthcheck requested")
     return jsonify({"status": "ok", "service": "Auth Service"}), 200
 
 @profile_bp.route("/healthcheck", methods=["GET"])
 def profile_healthcheck():
+    logger.info("Profile Service healthcheck requested")
     return jsonify({"status": "ok", "service": "Profile Service"}), 200
 
 @messaging_bp.route("/healthcheck", methods=["GET"])
 def messaging_healthcheck():
+    logger.info("Messaging Service healthcheck requested")
     return jsonify({"status": "ok", "service": "Messaging Service"}), 200
 
 @friendship_bp.route("/healthcheck", methods=["GET"])
 def friendship_healthcheck():
+    logger.info("Friendship Service healthcheck requested")
     return jsonify({"status": "ok", "service": "Friendship Service"}), 200
 
 @api_bp.route("/healthcheck", methods=["GET"])
 def api_healthcheck():
+    logger.info("API Service healthcheck requested")
     return jsonify({"status": "ok", "service": "API Service"}), 200
 
 @commands_bp.route("/healthcheck", methods=["GET"])
 def commands_healthcheck():
+    logger.info("Console Service healthcheck requested")
     return jsonify({"status": "ok", "service": "Console Service"}), 200
 
 # Register Blueprints
@@ -65,28 +72,8 @@ app.register_blueprint(messaging_bp, url_prefix="/messaging")
 app.register_blueprint(friendship_bp, url_prefix="/friendship")
 app.register_blueprint(api_bp, url_prefix="/api")
 app.register_blueprint(commands_bp, url_prefix="/commands")
+app.register_blueprint(admin_bp, url_prefix="/admin")
 app.register_blueprint(swaggerui_blueprint, url_prefix=app.config['SWAGGER_URL'])
-
-# Central Healthcheck for All Services
-@app.route("/healthcheck", methods=["GET"])
-def overall_healthcheck():
-    services = [
-        {"name": "Auth Service", "url": "/auth/healthcheck"},
-        {"name": "Profile Service", "url": "/profile/healthcheck"},
-        {"name": "Messaging Service", "url": "/messaging/healthcheck"},
-        {"name": "Friendship Service", "url": "/friendship/healthcheck"},
-        {"name": "API Service", "url": "/api/healthcheck"},
-        {"name": "Console Service", "url": "/commands/healthcheck"}
-    ]
-    statuses = []
-    for service in services:
-        try:
-            response = requests.get(f"http://localhost:5000{service['url']}", timeout=5)
-            status = "Healthy" if response.status_code == 200 else "Unhealthy"
-        except requests.exceptions.RequestException as e:
-            status = f"Unreachable: {str(e)}"
-        statuses.append({"name": service["name"], "url": service["url"], "status": status})
-    return jsonify(statuses), 200
 
 # Error handling
 @app.errorhandler(404)
@@ -98,5 +85,17 @@ def server_error(e):
     logger.error(f"Internal server error: {e}")
     return {"error": "Internal server error"}, 500
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+@jwt.unauthorized_loader
+def unauthorized_loader(callback):
+    return jsonify({"error": "Token missing or invalid", "message": callback}), 401
+
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    return jsonify({"error": "Token expired"}), 401
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run Flask on a specific port.")
+    parser.add_argument("--port", type=int, default=8080, help="Port to run the Flask app.")
+    args = parser.parse_args()
+
+    app.run(host="0.0.0.0", port=args.port)

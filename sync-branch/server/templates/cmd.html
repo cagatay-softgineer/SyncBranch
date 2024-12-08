@@ -15,19 +15,15 @@
         form {
             margin-bottom: 20px;
         }
-        input[type="text"] {
-            width: 80%;
+        select, button, input[type="text"] {
             padding: 10px;
             margin-right: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
         button {
-            padding: 10px 15px;
             background-color: #007BFF;
             color: white;
-            border: none;
-            border-radius: 5px;
             cursor: pointer;
         }
         button:hover {
@@ -58,7 +54,44 @@
 <body>
     <h1>Run Command</h1>
     <form id="commandForm">
-        <input type="text" id="command" name="command" placeholder="Enter command" required>
+        <label for="available-commands">Select a Command:</label>
+        <select id="available-commands">
+            <optgroup label="File Management">
+                <option value="list_dir">List Directory (Linux/Unix)</option>
+                <option value="list_dir_windows">List Directory (Windows)</option>
+                <option value="show_file_stats">Show File Stats</option>
+                <option value="create_temp_file">Create Temporary File (Linux/Unix)</option>
+                <option value="create_temp_file_windows">Create Temporary File (Windows)</option>
+                <option value="check_disk_usage">Check Disk Usage</option>
+            </optgroup>
+            <optgroup label="System Info">
+                <option value="disk_usage">Disk Usage (Linux/Unix)</option>
+                <option value="disk_free_windows">Free Disk Space (Windows)</option>
+                <option value="current_user">Current User (Linux/Unix)</option>
+                <option value="current_user_windows">Current User (Windows)</option>
+                <option value="system_info_windows">System Info (Windows)</option>
+                <option value="kernel_version">Kernel Version (Linux/Unix)</option>
+                <option value="uptime">System Uptime</option>
+                <option value="hostname">Show Hostname</option>
+            </optgroup>
+            <optgroup label="Networking">
+                <option value="ping_google">Ping Google</option>
+                <option value="show_ip">Show IP Configuration</option>
+                <option value="traceroute_google">Traceroute to Google</option>
+                <option value="dns_check">DNS Check (nslookup)</option>
+                <option value="netstat">Network Connections</option>
+            </optgroup>
+            <optgroup label="Process Management">
+                <option value="list_processes">List Processes (Linux/Unix)</option>
+                <option value="task_list_windows">Task List (Windows)</option>
+                <option value="top_processes">Top Processes (Linux/Unix)</option>
+            </optgroup>
+            <optgroup label="Log Management">
+                <option value="system_logs">Last 50 System Logs (Linux/Unix)</option>
+                <option value="auth_logs">Last 50 Auth Logs (Linux/Unix)</option>
+                <option value="event_logs_windows">Last 50 Event Logs (Windows)</option>
+            </optgroup>
+        </select>
         <button type="submit">Run</button>
     </form>
     <h2>Output:</h2>
@@ -66,29 +99,30 @@
     <button class="btn-save" id="save-command-output">Save Output</button>
 
     <script>
-        // Handle command execution
         document.getElementById('commandForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const command = document.getElementById('command').value;
+            const command = document.getElementById('available-commands').value;
             const outputElement = document.getElementById('command-output');
             outputElement.textContent = ''; // Clear previous output
-        
-            const response = await fetch('/commands/run_command', {
-                method: 'POST',
-                body: new URLSearchParams({ command }),
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-            });
-        
-            const data = await response.json();
-            if (data.success) {
-                // Extract and render the output field
-                outputElement.textContent = data.output.replace(/\\n/g, '\n');
-            } else {
-                outputElement.textContent = `Error: ${data.error}`;
+
+            try {
+                const response = await fetch('/commands/run_command', {
+                    method: 'POST',
+                    body: new URLSearchParams({ command }),
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    outputElement.textContent = data.output;
+                } else {
+                    outputElement.textContent = `Error: ${data.error}`;
+                }
+            } catch (error) {
+                outputElement.textContent = `Error: ${error.message}`;
             }
         });
 
-        // Handle saving command output
         document.getElementById('save-command-output').addEventListener('click', () => {
             const content = document.getElementById('command-output').textContent;
             const blob = new Blob([content], { type: 'text/plain' });

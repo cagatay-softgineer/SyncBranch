@@ -41,6 +41,25 @@
         .log-error {
             color: #dc3545;
         }
+        .fixed-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 250px;
+            z-index: 1050; /* Ensure it's above other content */
+            border: 1px solid #ddd;
+        }
+        
+        #system-metrics-container h5 {
+            font-weight: bold;
+            color: #007BFF;
+            margin-bottom: 10px;
+        }
+        
+        #system-metrics-graph {
+            max-height: 200px;
+            max-width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -61,6 +80,12 @@
                     </li>
                 </ul>
             </div>
+            <section id="system-metrics-section" class="mb-5">
+                <div id="system-metrics-container" class="fixed-container shadow-lg p-3 bg-white rounded">
+                    <h2>System Metrics</h2>
+                    <canvas id="system-metrics-graph" class="mt-4"></canvas>
+                </div>
+            </section>
         </div>
     </nav>
 
@@ -91,7 +116,7 @@
             <div class="mt-3">
                 <h4>Log Content</h4>
                 <div class="input-group mb-3">
-                    <input type="text" id="search-query" class="form-control" placeholder="Search logs">
+                    <input type="text" id="search-query" class="form-control" placeholder="Search in the logs">
                     <button class="btn btn-primary" onclick="fetchLogContent()">Search</button>
                 </div>
                 <div id="log-content" class="log-content"></div>
@@ -99,10 +124,11 @@
         </section>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
         async function fetchStatusHistory() {
             try {
-                const response = await fetch('/status/history');
+                const response = await fetch('/admin/status/history');
                 const data = await response.json();
                 if (data.status === "success") {
                     const servicesData = data.data.services;
@@ -189,37 +215,52 @@
         function showSection(sectionId) {
             const sections = document.querySelectorAll('section');
             sections.forEach(section => {
-                section.style.display = section.id === sectionId ? 'block' : 'none';
+                // Ensure system-metrics-section is always visible
+                if (section.id !== 'system-metrics-section') {
+                    section.style.display = section.id === sectionId ? 'block' : 'none';
+                }
             });
-
+        
             // Update active link in navbar
             const links = document.querySelectorAll('.nav-link');
             links.forEach(link => {
                 link.classList.toggle('active', link.getAttribute('onclick').includes(sectionId));
             });
         }
-
+        
         // Fetch server status
         async function fetchData(url, elementId, formatter) {
             const element = document.getElementById(elementId);
+            if (!element) {
+                console.error(`Element with ID '${elementId}' not found.`);
+                return;
+            }
+            
             try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const response = await fetch(`/admin/${url}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
                 const data = await response.json();
                 formatter(element, data);
             } catch (error) {
                 element.innerHTML = `<span class="text-danger">Error: ${error.message}</span>`;
             }
         }
-
+        
         function formatServerStatus(element, data) {
+            if (!Array.isArray(data)) {
+                element.innerHTML = `<span class="text-danger">Error: Invalid data format</span>`;
+                return;
+            }
+            
             element.innerHTML = data.map(server => `
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    ${server.name}
+                    ${server.name || 'Unknown Server'}
                     <span class="badge ${
                         server.status === 'Healthy' ? 'badge-healthy' : 
                         server.status === 'Unhealthy' ? 'badge-unhealthy' : 'badge-unreachable'
-                    }">${server.status}</span>
+                    }">${server.status || 'Unknown Status'}</span>
                 </li>
             `).join('');
         }
@@ -239,7 +280,7 @@
         async function fetchLogFiles() {
             const logFilesElement = document.getElementById("log-files");
             try {
-                const response = await fetch("/logs");
+                const response = await fetch("/admin/logs");
                 const data = await response.json();
                 if (data.status === "success") {
                     logFilesElement.innerHTML = data.files.map(file => `
@@ -268,7 +309,7 @@
             }
 
             const query = document.getElementById("search-query").value;
-            const url = `/logs/${selectedLogFile}?query=${query}`;
+            const url = `/admin/logs/${selectedLogFile}?query=${query}`;
             const logContentElement = document.getElementById("log-content");
 
             try {
@@ -294,7 +335,86 @@
         fetchData('/status', 'server-status', formatServerStatus);
         fetchData('/database', 'database-health', formatDatabaseHealth);
     </script>
-
+    <script>
+        async function fetchSystemMetrics() {
+            const url = "/admin/system/metrics";
+            const chartElement = document.getElementById("system-metrics-graph");
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+        
+                if (data.status === "success") {
+                    const metrics = data.metrics;
+        
+                    // Extract disk usage
+                    const diskLabels = metrics.disks.map(disk => `${disk.device} (${disk.mountpoint})`);
+                    const diskData = metrics.disks.map(disk => disk.percent_used);
+        
+                    // RAM and CPU usage
+                    const ramUsage = metrics.ram;
+                    const cpuLoad = metrics.cpu;
+        
+                    // Update chart
+                    updateSystemMetricsChart(diskLabels, diskData, ramUsage, cpuLoad);
+                } else {
+                    console.error("Error fetching system metrics:", data.message);
+                }
+            } catch (error) {
+                console.error("Error fetching system metrics:", error.message);
+            }
+        }
+        
+        function updateSystemMetricsChart(diskLabels, diskData, ramUsage, cpuLoad) {
+            const ctx = document.getElementById("system-metrics-graph").getContext("2d");
+        
+            if (window.systemMetricsChart) {
+                // Update existing chart
+                window.systemMetricsChart.data.labels = [...diskLabels, "RAM", "CPU"];
+                window.systemMetricsChart.data.datasets[0].data = [...diskData, ramUsage, cpuLoad];
+                window.systemMetricsChart.update();
+            } else {
+                // Create new chart
+                window.systemMetricsChart = new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels: [...diskLabels, "RAM", "CPU"],
+                        datasets: [{
+                            label: "Usage (%)",
+                            data: [...diskData, ramUsage, cpuLoad],
+                            backgroundColor: [
+                                ...diskLabels.map(() => "rgba(100, 250, 160, 0.2)"),
+                                "rgba(255, 99, 132, 0.2)", // RAM
+                                "rgba(54, 162, 235, 0.2)", // CPU
+                            ],
+                            borderColor: [
+                                ...diskLabels.map(() => "rgba(75, 192, 192, 1)"),
+                                "rgba(255, 99, 132, 1)", // RAM
+                                "rgba(54, 162, 235, 1)", // CPU
+                            ],
+                            borderWidth: 1,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, // Allow chart to resize
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: value => `${value}%`
+                                },
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Fetch metrics on load and update every 30 seconds
+        fetchSystemMetrics();
+        setInterval(fetchSystemMetrics, 5000);
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

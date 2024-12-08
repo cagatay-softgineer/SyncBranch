@@ -24,7 +24,6 @@ def register():
     return jsonify({"message": "User registered successfully"}), 201
 
 @auth_bp.route('/login', methods=['POST'])
-@limiter.limit("5 per minute")
 def login():
     try:
         data = request.json
@@ -34,22 +33,17 @@ def login():
         if not username or not password:
             return jsonify({"error": "Username and password are required"}), 400
 
-        # Query to fetch hashed password for the user
+        # Verify credentials
         query = "SELECT password_hash FROM users WHERE username = ?"
         rows = execute_query_with_logging(query, "flutter", params=(username,), fetch=True)
 
         if rows:
-            # Extract the hashed password from the query result
-            stored_hashed_password = rows[0][0][0]
-            # Verify the provided password against the stored hash
+            stored_hashed_password = rows[0][0]
             if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
-                # Create JWT access token
+                # Create JWT token
                 access_token = create_access_token(identity=username)
                 return jsonify({"access_token": access_token}), 200
-            else:
-                return jsonify({"error": "Invalid username or password"}), 401
-        else:
-            return jsonify({"error": "Invalid username or password"}), 401
+        return jsonify({"error": "Invalid username or password"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

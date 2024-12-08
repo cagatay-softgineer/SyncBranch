@@ -61,7 +61,7 @@ def get_table_records(table_name):
     try:
         # Fetch data using execute_query
         query = f"SELECT * FROM {table_name}"
-        data, description = execute_query_with_logging(query, "primary", fetch=True)
+        data, description = execute_query_with_logging(query, "flutter", fetch=True)
         
         columns = [desc[0] for desc in description]
         print(columns)

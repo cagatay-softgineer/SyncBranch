@@ -38,7 +38,7 @@ def login():
         rows = execute_query_with_logging(query, "flutter", params=(username,), fetch=True)
 
         if rows:
-            stored_hashed_password = rows[0][0]
+            stored_hashed_password = rows[0][0][0]
             if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
                 # Create JWT token
                 access_token = create_access_token(identity=username)

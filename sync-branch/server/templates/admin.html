@@ -237,7 +237,7 @@
             }
             
             try {
-                const response = await fetch(`/admin/${url}`);
+                const response = await fetch(`/admin${url}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }

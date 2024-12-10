@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_swagger_ui import get_swaggerui_blueprint
@@ -23,9 +23,30 @@ app.config['API_URL'] = '/static/swagger.json'
 jwt = JWTManager(app)
 limiter = Limiter(app)
 
-# Logging configuration
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Setup logging
+LOG_FILE = "logs/endpoint.log"
+
+# Create a logger
+logger = logging.getLogger("SyncBranchLogger")
+logger.setLevel(logging.DEBUG)
+
+# Create file handler
+file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
+
+# Create console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+# Create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+logger.propagate = False
 
 # Swagger documentation setup
 swaggerui_blueprint = get_swaggerui_blueprint(
@@ -75,15 +96,16 @@ app.register_blueprint(commands_bp, url_prefix="/commands")
 app.register_blueprint(admin_bp, url_prefix="/admin")
 app.register_blueprint(swaggerui_blueprint, url_prefix=app.config['SWAGGER_URL'])
 
-# Error handling
 @app.errorhandler(404)
-def not_found(e):
-    return {"error": "Endpoint not found"}, 404
+def page_not_found(e):
+    return render_template('error.html', error_message="The Endpoint you are looking for does not exist."), 404
 
+# 500 Error Handler
 @app.errorhandler(500)
-def server_error(e):
+def internal_server_error(e):
     logger.error(f"Internal server error: {e}")
-    return {"error": "Internal server error"}, 500
+    return render_template('error.html', error_message="An internal server error occurred. Please try again later."), 500
+
 
 @jwt.unauthorized_loader
 def unauthorized_loader(callback):

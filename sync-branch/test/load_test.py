@@ -44,9 +44,9 @@ class UserBehavior(TaskSet):
     def database_health(self):
         self.client.get("/admin/database", auth=(ADMIN, ADMIN_PWORD))
 
-    @task
-    def system_metrics(self):
-        self.client.get("/admin/system/metrics", auth=(ADMIN, ADMIN_PWORD))
+    #@task
+    #def system_metrics(self):
+    #    self.client.get("/admin/system/metrics", auth=(ADMIN, ADMIN_PWORD))
 
     @task
     def list_logs(self):

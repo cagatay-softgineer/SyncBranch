@@ -1,14 +1,34 @@
 from flask import render_template, jsonify, request, Blueprint
 from flask_httpauth import HTTPBasicAuth
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 from threading import Thread
 import requests
-import psutil
+import sqlite3
 import pyodbc
+import psutil
 import json
 import time
 import os
+
+# Path to SQLite database
+DB_FILE = "service_status.db"
+
+def init_db():
+    """Initialize the SQLite database."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS last_check_times (
+            service_name TEXT PRIMARY KEY,
+            last_checked TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+# Call this function once at the start of your program
+init_db()
 
 auth = HTTPBasicAuth()
 
@@ -37,6 +57,9 @@ SERVICES = [
     {"name": "Console Service", "url": "http://localhost:8080/commands/healthcheck"}
 ]
 
+# Define the interval within which checks should be skipped (e.g., 5 minutes)
+CHECK_INTERVAL = timedelta(seconds=10)
+
 # Configuration
 LOGS_FOLDER = "logs"  # Path to your logs folder
 DB_HOST = os.getenv("PRIMARY_SQL_SERVER")
@@ -47,22 +70,65 @@ DB_PASSWORD = os.getenv("PRIMARY_SQL_PASSWORD")
 
 MSSQL_CONN_STRING = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={DB_HOST},{DB_PORT};DATABASE={DB_NAME};UID={DB_USER};PWD={DB_PASSWORD}"
 
-ENDPOINTS = [
-    {"name": "API Server", "url": "http://localhost:8080/healthcheck"},
-]
-
 STATUS_LOG_FILE = "sync-branch/server/status_log.json"
 
+def acquire_service_lock(cursor, service_name):
+    """Acquire a lock for a specific service."""
+    cursor.execute("BEGIN IMMEDIATE")
+    cursor.execute("SELECT last_checked FROM last_check_times WHERE service_name = ?", (service_name,))
+    row = cursor.fetchone()
+    return row
+
+def update_last_checked(cursor, service_name, timestamp):
+    """Update the last_checked time for a service."""
+    cursor.execute("""
+        INSERT INTO last_check_times (service_name, last_checked)
+        VALUES (?, ?)
+        ON CONFLICT(service_name) DO UPDATE SET last_checked=excluded.last_checked
+    """, (service_name, timestamp))
+
 def check_service_status():
-    """Checks the status of each service."""
+    """Checks the status of each service, ensuring only one instance checks within the interval."""
     statuses = {}
+    current_time = datetime.now()
+    conn = sqlite3.connect(DB_FILE, timeout=10)
+    cursor = conn.cursor()
+
     for service in SERVICES:
+        service_name = service["name"]
+        service_url = service["url"]
+
         try:
-            response = requests.get(service["url"], timeout=10)
-            status = "Healthy" if response.status_code == 200 else "Unhealthy"
-        except requests.exceptions.RequestException:
-            status = "Unreachable"
-        statuses[service["name"]] = status
+            # Acquire a lock for the service
+            row = acquire_service_lock(cursor, service_name)
+
+            if row:
+                last_checked = datetime.fromisoformat(row[0])
+                time_since_last_check = current_time - last_checked
+                print(time_since_last_check)
+
+                # Skip if the last check was within the interval
+                if time_since_last_check < CHECK_INTERVAL:
+                    statuses[service_name] = "Skipped"
+                    conn.commit()  # Commit to release the lock
+                    continue
+
+            # Perform the health check
+            try:
+                response = requests.get(service_url, timeout=10)
+                status = "Healthy" if response.status_code == 200 else "Unhealthy"
+            except requests.exceptions.RequestException:
+                status = "Unreachable"
+
+            # Update the last checked time
+            update_last_checked(cursor, service_name, current_time.isoformat())
+            conn.commit()
+            statuses[service_name] = status
+
+        except sqlite3.OperationalError as e:
+            statuses[service_name] = f"Skipped due to lock contention ({str(e)})"
+
+    conn.close()
     return statuses
 
 def check_database_status():
@@ -194,7 +260,12 @@ def status_history():
     """Serves historical status data."""
     try:
         data = safe_read_json_with_cache(STATUS_LOG_FILE)
-
+        # Remove skipped statuses from data
+        for service_name, logs in data["services"].items():
+            data["services"][service_name] = [log for log in logs if log["status"] != "Skipped"]
+        data["database"] = [
+            log for log in data["database"] if log["status"] != "Skipped"
+        ]
         # Format response
         services_history = {
             service_name: [
@@ -203,15 +274,14 @@ def status_history():
             ]
             for service_name, logs in data["services"].items()
         }
-
         database_history = [
             {"timestamp": log["timestamp"], "status": 1 if log["status"] == "Healthy" else 0}
             for log in data["database"]
         ]
-
         return jsonify({"status": "success", "data": {"services": services_history, "database": database_history}})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
 
 
 @admin_bp.route("/status")
@@ -225,6 +295,13 @@ def server_status():
         if not isinstance(data, dict) or "services" not in data:
             return jsonify({"error": "Invalid status log format"}), 500
 
+        for service_name, logs in data["services"].items():
+            data["services"][service_name] = [log for log in logs if log["status"] != "Skipped"]
+            data["database"] = [
+            log for log in data["database"] if log["status"] != "Skipped"
+        ]
+        print(len(data))
+        
         services = data["services"]
         latest_statuses = []
 
@@ -287,7 +364,7 @@ def view_log_file(filename):
 
         # Get query parameters for filtering and pagination
         query = request.args.get("query", "").lower()  # Filter query string
-        start = int(request.args.get("start", 0))  # Pagination start
+        start = int(request.args.get("start", -251))  # Pagination start
         limit = int(request.args.get("limit", 250))  # Pagination limit
 
         # Apply filter if query is provided

@@ -175,3 +175,5 @@ logs
 status_log.json
 hello.bat
 wifiProfiles.bat
+service_status.db
+.vscode

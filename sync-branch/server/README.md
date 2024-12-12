@@ -7,7 +7,7 @@ This API manages user profiles, messaging, friendships, and authentication. It u
 ---
 
 ## Base URL
-The base URL for all endpoints is: `http://<your-server-address>`
+The base URL for all endpoints is: `https://api-sync-branch.yggbranch.dev/`
 
 ---
 

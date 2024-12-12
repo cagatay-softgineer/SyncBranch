@@ -11,12 +11,11 @@ app.secret_key = os.getenv("JWT_SECRET_KEY")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
 # API Base URL (the backend server running on localhost:5000)
-backend_url = 'http://localhost:5000'
-
+backend_url = 'http://localhost:8080'
 # Route for the homepage (user dashboard after login)
 @app.route('/')
 def index():
-    if not session["logged_in"]:
+    if not session.get("logged_in"):
         return redirect(url_for('login'))
     return render_template('index.html')
 
@@ -126,4 +125,4 @@ def logout():
         return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
+    app.run(debug=True, port=8000)

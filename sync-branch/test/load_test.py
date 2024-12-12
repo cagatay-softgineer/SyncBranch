@@ -34,39 +34,36 @@ class UserBehavior(TaskSet):
     @task
     def commands_healthcheck(self):
         self.client.get("/commands/healthcheck")
+        
+    @task
+    def app_healthcheck(self):
+        self.client.get("/healthcheck")
 
+    # ---------------- Auth Routes ----------------
+#   @task
+#   def login(self):
+#       self.client.post("/auth/login", auth=(TEST_USER, TEST_USER_PWORD))
+#   
     # ---------------- Admin Routes ----------------
-    @task
-    def admin_status(self):
-        self.client.get("/admin/status", auth=(ADMIN, ADMIN_PWORD))
-
-    @task
-    def database_health(self):
-        self.client.get("/admin/database", auth=(ADMIN, ADMIN_PWORD))
+    #@task
+    #def admin_status(self):
+    #    self.client.get("/admin/status", auth=(ADMIN, ADMIN_PWORD))
+#
+    #@task
+    #def database_health(self):
+    #    self.client.get("/admin/database", auth=(ADMIN, ADMIN_PWORD))
 
     #@task
     #def system_metrics(self):
     #    self.client.get("/admin/system/metrics", auth=(ADMIN, ADMIN_PWORD))
 
-    @task
-    def list_logs(self):
-        self.client.get("/admin/logs", auth=(ADMIN, ADMIN_PWORD))
-
-    @task
-    def view_log_file(self):
-        self.client.get("/admin/logs/test.log", auth=(ADMIN, ADMIN_PWORD))
-
-    # ---------------- API Routes ----------------
-    @task
-    def fetch_table_records(self):
-        self.client.get(
-            "/api/table/users", 
-            auth=(ADMIN, ADMIN_PWORD)
-        )
+    #@task
+    #def list_logs(self):
+    #    self.client.get("/admin/logs", auth=(ADMIN, ADMIN_PWORD))
 
 class WebsiteUser(HttpUser):
     # Change the host to point to the load balancer
     host = "http://127.0.0.1:8080"  # Replace with your load balancer's address
 
     tasks = [UserBehavior]
-    wait_time = between(1, 2)  # Random wait time between requests (1-2 seconds)
+    wait_time = between(1.5, 3.5)  # Random wait time between requests (1-2 seconds)

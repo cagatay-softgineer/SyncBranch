@@ -2,6 +2,8 @@ from flask import Flask, jsonify, render_template
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_swagger_ui import get_swaggerui_blueprint
+from cmd_gui_kit import CmdGUI
+from flask_cors import CORS
 import logging
 from auth import auth_bp
 from profiles import profile_bp
@@ -14,14 +16,20 @@ from dotenv import load_dotenv
 import argparse
 import os
 
+
+gui = CmdGUI()
+
 load_dotenv()
 app = Flask(__name__)
+
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 app.config['SWAGGER_URL'] = '/api/docs'
 app.config['API_URL'] = '/static/swagger.json'
 
 jwt = JWTManager(app)
 limiter = Limiter(app)
+
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Setup logging
 LOG_FILE = "logs/endpoint.log"
@@ -58,32 +66,44 @@ swaggerui_blueprint = get_swaggerui_blueprint(
 # Add /healthcheck to each blueprint
 @auth_bp.route("/healthcheck", methods=["GET"])
 def auth_healthcheck():
+    gui.log("Auth Service healthcheck requested")
     logger.info("Auth Service healthcheck requested")
     return jsonify({"status": "ok", "service": "Auth Service"}), 200
 
 @profile_bp.route("/healthcheck", methods=["GET"])
 def profile_healthcheck():
+    gui.log("Profile Service healthcheck requested")
     logger.info("Profile Service healthcheck requested")
     return jsonify({"status": "ok", "service": "Profile Service"}), 200
 
 @messaging_bp.route("/healthcheck", methods=["GET"])
 def messaging_healthcheck():
+    gui.log("Messaging Service healthcheck requested")
     logger.info("Messaging Service healthcheck requested")
     return jsonify({"status": "ok", "service": "Messaging Service"}), 200
 
 @friendship_bp.route("/healthcheck", methods=["GET"])
 def friendship_healthcheck():
+    gui.log("Friendship Service healthcheck requested")
     logger.info("Friendship Service healthcheck requested")
     return jsonify({"status": "ok", "service": "Friendship Service"}), 200
 
 @api_bp.route("/healthcheck", methods=["GET"])
 def api_healthcheck():
+    gui.log("API Service healthcheck requested")
     logger.info("API Service healthcheck requested")
     return jsonify({"status": "ok", "service": "API Service"}), 200
 
 @commands_bp.route("/healthcheck", methods=["GET"])
 def commands_healthcheck():
+    gui.log("Console Service healthcheck requested")
     logger.info("Console Service healthcheck requested")
+    return jsonify({"status": "ok", "service": "Console Service"}), 200
+
+@app.route("/healthcheck", methods=['POST', 'GET'])
+def app_healthcheck():
+    #gui.log("App healthcheck requested")
+    logger.info("App healthcheck requested")
     return jsonify({"status": "ok", "service": "Console Service"}), 200
 
 # Register Blueprints
@@ -103,6 +123,7 @@ def page_not_found(e):
 # 500 Error Handler
 @app.errorhandler(500)
 def internal_server_error(e):
+    gui.log(f"Internal server error: {e}", level="error")
     logger.error(f"Internal server error: {e}")
     return render_template('error.html', error_message="An internal server error occurred. Please try again later."), 500
 

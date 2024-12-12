@@ -1,16 +1,1 @@
-start python sync-branch\server\app.py --port 5001
-start python sync-branch\server\app.py --port 5002
-start python sync-branch\server\app.py --port 5003
-start python sync-branch\server\app.py --port 5004
-start python sync-branch\server\app.py --port 5005
-start python sync-branch\server\app.py --port 5006
-start python sync-branch\server\app.py --port 5007
-start python sync-branch\server\app.py --port 5008
-start python sync-branch\server\app.py --port 5009
-start python sync-branch\server\app.py --port 5010
-start python sync-branch\server\app.py --port 5011
-start python sync-branch\server\app.py --port 5012
-start python sync-branch\server\app.py --port 5013
-start python sync-branch\server\app.py --port 5014
-start python sync-branch\server\app.py --port 5015
-start python sync-branch\server\app.py --port 5016
+start python sync-branch\server\app.py --port 5070

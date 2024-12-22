@@ -379,7 +379,6 @@ def user_profile(user_id):
         
         if not user_info:
             return render_template('error.html', error_message=f"No personal type information found for user ID: {user_id}")
-        
         user_info = {
             "user_id": user_info[0],
             "display_name": user_info[1],
@@ -390,11 +389,59 @@ def user_profile(user_id):
 
 
         # Fetch top 5 matches
-        cursor.execute(f"""
-SELECT TOP 5 * 
-FROM AllMatches('{user_id}')
-ORDER BY final_match_rate_percentage DESC;;
-""")
+        cursor.execute("""
+        WITH RankedMatches AS (
+    SELECT 
+        CASE WHEN u1.user_id = ? THEN u2.user_id ELSE u1.user_id END AS match_user_id,
+        CASE WHEN u1.user_id = ? THEN u2.display_name ELSE u1.display_name END AS match_user_name,
+        CASE WHEN u1.user_id = ? THEN u2.profile_image_url ELSE u1.profile_image_url END AS match_user_image,
+        upmD.final_match_rate_percentage,
+        CASE WHEN u1.user_id = ? THEN uaf2.personal_type ELSE uaf1.personal_type END AS match_user_type,
+        CASE 
+            WHEN u1.user_id = ? THEN uaf1.personal_type
+            ELSE uaf2.personal_type
+        END AS type1,
+        CASE 
+            WHEN u1.user_id = ? THEN uaf2.personal_type
+            ELSE uaf1.personal_type
+        END AS type2,
+        ROW_NUMBER() OVER (
+            PARTITION BY 
+                CASE WHEN u1.user_id = ? THEN u2.user_id ELSE u1.user_id END
+            ORDER BY 
+                upmD.final_match_rate_percentage DESC
+        ) AS rn
+    FROM 
+        UserPairMatchRateWithDisplayNamesTable upmD
+    JOIN 
+        Users u1 ON upmD.user_id1 = u1.user_id
+    JOIN 
+        Users u2 ON upmD.user_id2 = u2.user_id
+    JOIN 
+        UserClusters uaf1 ON u1.user_id = uaf1.user_id
+    JOIN 
+        UserClusters uaf2 ON u2.user_id = uaf2.user_id
+    WHERE 
+        u1.user_id = ? OR u2.user_id = ?
+)
+SELECT TOP 5
+    rm.match_user_id,
+    rm.match_user_name,
+    rm.match_user_image,
+    rm.final_match_rate_percentage,
+    rm.match_user_type,
+    ptmd.description AS match_type_desc
+FROM 
+    RankedMatches rm
+LEFT JOIN 
+    personal_type_match ptmd
+ON 
+    (rm.type1 = ptmd.type_1 AND rm.type2 = ptmd.type_2) OR 
+    (rm.type1 = ptmd.type_2 AND rm.type2 = ptmd.type_1)
+WHERE 
+    rm.rn = 1
+ORDER BY final_match_rate_percentage DESC;
+""", (user_id, user_id, user_id, user_id, user_id, user_id, user_id, user_id, user_id))
         top_matches = cursor.fetchall()
         top_matches = [
             {
@@ -408,11 +455,59 @@ ORDER BY final_match_rate_percentage DESC;;
         ]
 
         # Fetch all matches
-        cursor.execute(f"""
-SELECT * 
-FROM AllMatches('{user_id}')
+        cursor.execute("""
+        WITH RankedMatches AS (
+    SELECT 
+        CASE WHEN u1.user_id = ? THEN u2.user_id ELSE u1.user_id END AS match_user_id,
+        CASE WHEN u1.user_id = ? THEN u2.display_name ELSE u1.display_name END AS match_user_name,
+        CASE WHEN u1.user_id = ? THEN u2.profile_image_url ELSE u1.profile_image_url END AS match_user_image,
+        upmD.final_match_rate_percentage,
+        CASE WHEN u1.user_id = ? THEN uaf2.personal_type ELSE uaf1.personal_type END AS match_user_type,
+        CASE 
+            WHEN u1.user_id = ? THEN uaf1.personal_type
+            ELSE uaf2.personal_type
+        END AS type1,
+        CASE 
+            WHEN u1.user_id = ? THEN uaf2.personal_type
+            ELSE uaf1.personal_type
+        END AS type2,
+        ROW_NUMBER() OVER (
+            PARTITION BY 
+                CASE WHEN u1.user_id = ? THEN u2.user_id ELSE u1.user_id END
+            ORDER BY 
+                upmD.final_match_rate_percentage DESC
+        ) AS rn
+    FROM 
+        UserPairMatchRateWithDisplayNamesTable upmD
+    JOIN 
+        Users u1 ON upmD.user_id1 = u1.user_id
+    JOIN 
+        Users u2 ON upmD.user_id2 = u2.user_id
+    JOIN 
+        UserClusters uaf1 ON u1.user_id = uaf1.user_id
+    JOIN 
+        UserClusters uaf2 ON u2.user_id = uaf2.user_id
+    WHERE 
+        u1.user_id = ? OR u2.user_id = ?
+)
+SELECT
+    rm.match_user_id,
+    rm.match_user_name,
+    rm.match_user_image,
+    rm.final_match_rate_percentage,
+    rm.match_user_type,
+    ptmd.description AS match_type_desc
+FROM 
+    RankedMatches rm
+LEFT JOIN 
+    personal_type_match ptmd
+ON 
+    (rm.type1 = ptmd.type_1 AND rm.type2 = ptmd.type_2) OR 
+    (rm.type1 = ptmd.type_2 AND rm.type2 = ptmd.type_1)
+WHERE 
+    rm.rn = 1
 ORDER BY final_match_rate_percentage DESC;
-""")
+""", (user_id, user_id, user_id, user_id, user_id, user_id, user_id, user_id, user_id))
         all_matches = cursor.fetchall()
         all_matches = [
             {

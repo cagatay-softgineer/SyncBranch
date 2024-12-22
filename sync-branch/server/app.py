@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_swagger_ui import get_swaggerui_blueprint
@@ -12,6 +12,7 @@ from friendship import friendship_bp
 from commands import commands_bp
 from admin import admin_bp
 from api import api_bp
+from database import database_bp
 from dotenv import load_dotenv
 import argparse
 import os
@@ -56,12 +57,50 @@ logger.addHandler(console_handler)
 
 logger.propagate = False
 
+# Middleware to log all requests
+def log_request():
+    logger.info(f"Request received: {request.method} {request.url}")
+app.before_request(log_request)
+
 # Swagger documentation setup
 swaggerui_blueprint = get_swaggerui_blueprint(
     app.config['SWAGGER_URL'],
     app.config['API_URL'],
     config={'app_name': "Endpoint Server API"}
 )
+
+# Add /healthcheck to each blueprint
+@auth_bp.before_request
+def log_auth_requests():
+    logger.info("Auth blueprint request received.")
+
+@profile_bp.before_request
+def log_profile_requests():
+    logger.info("Profile blueprint request received.")
+
+@messaging_bp.before_request
+def log_messaging_requests():
+    logger.info("Messaging blueprint request received.")
+
+@friendship_bp.before_request
+def log_friendship_requests():
+    logger.info("Friendship blueprint request received.")
+
+@api_bp.before_request
+def log_api_requests():
+    logger.info("API blueprint request received.")
+    
+@database_bp.before_request
+def log_database_requests():
+    logger.info("API blueprint request received.")
+
+@commands_bp.before_request
+def log_commands_requests():
+    logger.info("Commands blueprint request received.")
+
+@admin_bp.before_request
+def log_admin_requests():
+    logger.info("Admin blueprint request received.")
 
 # Add /healthcheck to each blueprint
 @auth_bp.route("/healthcheck", methods=["GET"])
@@ -94,6 +133,12 @@ def api_healthcheck():
     logger.info("API Service healthcheck requested")
     return jsonify({"status": "ok", "service": "API Service"}), 200
 
+@database_bp.route("/healthcheck", methods=["GET"])
+def database_healthcheck():
+    gui.log("Database Service healthcheck requested")
+    logger.info("Database Service healthcheck requested")
+    return jsonify({"status": "ok", "service": "API Service"}), 200
+
 @commands_bp.route("/healthcheck", methods=["GET"])
 def commands_healthcheck():
     gui.log("Console Service healthcheck requested")
@@ -112,6 +157,7 @@ app.register_blueprint(profile_bp, url_prefix="/profile")
 app.register_blueprint(messaging_bp, url_prefix="/messaging")
 app.register_blueprint(friendship_bp, url_prefix="/friendship")
 app.register_blueprint(api_bp, url_prefix="/api")
+app.register_blueprint(database_bp, url_prefix="/database")
 app.register_blueprint(commands_bp, url_prefix="/commands")
 app.register_blueprint(admin_bp, url_prefix="/admin")
 app.register_blueprint(swaggerui_blueprint, url_prefix=app.config['SWAGGER_URL'])

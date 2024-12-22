@@ -1,1 +1,1 @@
-start python sync-branch\server\app.py --port 5070
+cloudflared tunnel --config C:\Users\cagat\.cloudflared\config-mssql.yml run mssql

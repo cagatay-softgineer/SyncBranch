@@ -23,34 +23,48 @@ def send_message():
     execute_query_with_logging(query, "flutter", (current_user, recipient_username, message))
     return jsonify({"message": "Message sent successfully"}), 200
 
+
 @messaging_bp.route('/retrieve', methods=['GET'])
 @jwt_required()
 def retrieve_messages():
-    current_user = get_jwt_identity()
-    page = int(request.args.get('page', 1))
-    per_page = int(request.args.get('per_page', 10))
+    current_user = get_jwt_identity()  # Fetch current user's identity from JWT
 
     query = """
-SELECT msg.content, usr.username, msg.sent_at, msg.is_read
-FROM messages msg
-JOIN users usr ON usr.user_id = msg.sender_id
-WHERE msg.receiver_id = (SELECT user_id FROM users WHERE username = ?)
-ORDER BY msg.sent_at DESC
-OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;
+    SELECT msg.content, 
+           usr_sender.username AS sender, 
+           usr_receiver.username AS receiver, 
+           msg.sent_at, 
+           msg.is_read, 
+           msg.message_id
+    FROM messages msg
+    JOIN users usr_sender ON usr_sender.user_id = msg.sender_id
+    JOIN users usr_receiver ON usr_receiver.user_id = msg.receiver_id
+    WHERE msg.sender_id = (SELECT user_id FROM users WHERE username = ?)
+       OR msg.receiver_id = (SELECT user_id FROM users WHERE username = ?)
+    ORDER BY msg.sent_at DESC;
     """
-    messages,_ = execute_query_with_logging(query,"flutter", (current_user, (page - 1) * per_page, per_page), fetch=True)
+    messages, _ = execute_query_with_logging(
+        query, 
+        "flutter", 
+        (current_user, current_user), 
+        fetch=True
+    )
+
     serialized_messages = []
     for message in messages:
-        # Convert each Row to a dictionary or list
+        # Convert each row to a dictionary
         serialized_message = {
-            "message": message[0],
-            "user_id": message[1],
-            "timestamp": message[2],  # Convert datetime to ISO string
-            "is_read" : message[3]
+            "message": f"{message[0]}",
+            "sender": f"{message[1]}",
+            "receiver": f"{message[2]}",
+            "timestamp": message[3].isoformat() if message[3] else None,  # Convert datetime to ISO string
+            "is_read": f"{message[4]}",
+            "message_id": f"{message[5]}",
         }
         serialized_messages.append(serialized_message)
+
     # Return the response
-    return jsonify({"messages": serialized_messages}), 200
+    return jsonify(serialized_messages), 200
 
 @messaging_bp.route('/mark', methods=['POST'])
 @jwt_required()

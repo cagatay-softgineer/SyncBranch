@@ -105,7 +105,7 @@ def check_service_status():
             if row:
                 last_checked = datetime.fromisoformat(row[0])
                 time_since_last_check = current_time - last_checked
-                print(time_since_last_check)
+                #print(time_since_last_check)
 
                 # Skip if the last check was within the interval
                 if time_since_last_check < CHECK_INTERVAL:
@@ -300,7 +300,6 @@ def server_status():
             data["database"] = [
             log for log in data["database"] if log["status"] != "Skipped"
         ]
-        print(len(data))
         
         services = data["services"]
         latest_statuses = []
@@ -337,7 +336,6 @@ def database_health():
         conn.close()
         return jsonify({"status": "Healthy"})
     except Exception as e:
-        print(e)
         return jsonify({"status": "Unhealthy", "error": str(e)})
 
 # Endpoint to list log files

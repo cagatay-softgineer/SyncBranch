@@ -92,4 +92,4 @@ def add_spotify_dashboard_user(fullname, email):
         driver.quit()
         
 # Example usage with arguments
-add_spotify_dashboard_user("Cagatay Alkan", "cagatayalkan333@hotmail.com")
+add_spotify_dashboard_user("example full name", "example123@mail.com")

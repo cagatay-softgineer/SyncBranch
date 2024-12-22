@@ -3,6 +3,7 @@ import logging
 from dotenv import load_dotenv
 import os
 from cmd_gui_kit import CmdGUI
+import json
 
 # Initialize CmdGUI for visual feedback
 gui = CmdGUI()
@@ -60,8 +61,8 @@ def execute_query_with_logging(query, db_name, params=(), fetch=False):
         cursor = conn.cursor()
 
         # Log and display query execution
-        gui.log(f"Executing query: {query} with params: {params}", level="info")
-        logging.info(f"Executing query: {query} with params: {params}")
+        gui.log(f"Executing query: {query}", level="info")
+        logging.info(f"Executing query: {query}")
 
         # Ensure params are in the correct format if using TVP
         if isinstance(params, tuple) and len(params) == 1 and isinstance(params[0], (tuple, list)):
@@ -87,3 +88,23 @@ def execute_query_with_logging(query, db_name, params=(), fetch=False):
         if conn:
             conn.close()
             gui.status(f"Connection to {db_name} database closed.", status="info")
+
+
+with open('gender_api/first_names/first_names.json', 'r', encoding='utf-8') as f:
+    gender_data = json.load(f)
+
+
+def get_gender_icon(display_name):
+    
+    if " " in display_name:
+        display_name = display_name.split(" ")[0]
+    
+    if display_name in gender_data:
+        gender_probs = gender_data[display_name].get('gender', {})
+        if gender_probs:
+            most_probable_gender = max(gender_probs, key=gender_probs.get)
+            if most_probable_gender == 'M':
+                return '/static/icons/male.png'
+            elif most_probable_gender == 'F':
+                return '/static/icons/female.png'
+    return '/static/icons/unknown.png'

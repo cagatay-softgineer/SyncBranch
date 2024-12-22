@@ -18,23 +18,21 @@ def register():
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
+    spotify_user_id = data.get('spotify_id')
 
     if not username or not email or not password:
         return jsonify({"error": "All fields are required"}), 400
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     query = """
-        INSERT INTO users (username, email, password_hash, created_at)
-        VALUES (?, ?, ?, GETDATE())
+        INSERT INTO users (username, email, password_hash, spotify_user_id, created_at)
+        VALUES (?, ?, ? , ?, GETDATE())
     """
-    execute_query_with_logging(query, "flutter", (username, email, hashed_password.decode('utf-8')))
+    execute_query_with_logging(query, "flutter", (username, email, hashed_password.decode('utf-8'), spotify_user_id))
     return jsonify({"message": "User registered successfully"}), 201
 
 @auth_bp.route('/login', methods=['POST', 'GET'])
 def login():
-    print(request.method)
-    print(request.method)
-    print(request.method)
     if request.method == 'OPTIONS':
         # Handle CORS preflight request
         return jsonify({"message": "CORS preflight successful"}), 200
@@ -49,14 +47,15 @@ def login():
             return jsonify({"error": "Username and password are required"}), 400
 
         # Verify credentials
-        query = "SELECT password_hash FROM users WHERE username = ?"
+        query = "SELECT password_hash,username FROM users WHERE username = ?"
         rows = execute_query_with_logging(query, "flutter", params=(username,), fetch=True)
 
         if rows:
             stored_hashed_password = rows[0][0][0]
+            user_id = rows[0][0][1]
             if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
                 access_token = create_access_token(identity=username)
-                return jsonify({"access_token": access_token}), 200
+                return jsonify({"access_token": access_token, "user_id": user_id}), 200
 
         return jsonify({"error": "Invalid username or password"}), 401
     except Exception as e:

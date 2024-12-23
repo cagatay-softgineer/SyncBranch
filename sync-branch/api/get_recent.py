@@ -289,7 +289,6 @@ def insert_recently_played_tracks():
         gui.log(f"Recently played tracks stored successfully for user {user_id}.", level="info")
         logger.info(f"Recently played tracks stored successfully for user {user_id}.")
 
-
 # Main function
 def main():
     try:

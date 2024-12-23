@@ -177,3 +177,5 @@ hello.bat
 wifiProfiles.bat
 service_status.db
 .vscode
+sync-branch/model/tracks_uri.json
+sync-branch/model/audio_features.json

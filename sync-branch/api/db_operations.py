@@ -59,29 +59,87 @@ def check_user_exists(user_id, cursor):
     cursor.execute("SELECT 1 FROM Users WHERE user_id = ?", (user_id,))
     return cursor.fetchone() is not None
 
-def insert_user_data(user_id, headers, cursor, conn, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE):
+def insert_user_data(user_id, headers, cursor, conn, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE, update=False):
     """
-    Fetches user profile data from Spotify API and inserts it into the database.
+    Fetches user profile data from Spotify API and inserts or updates it into the database.
 
     Args:
         user_id (str): The Spotify user ID.
         headers (dict): Authorization headers for Spotify API.
         cursor (pyodbc.Cursor): Database cursor for executing SQL queries.
         conn (pyodbc.Connection): Database connection to commit transactions.
+        update (bool): If True, updates user information if it already exists in the database.
     """
     user_url = f"https://api.spotify.com/v1/users/{user_id}"
     user_response = make_request(user_url, "Get User Profile")
+
     if user_response and user_response.status_code == 200:
         user_data = user_response.json()
-        cursor.execute("""
-        INSERT INTO Users (user_id, display_name, email, profile_image_url, country)
-        VALUES (?, ?, ?, ?, ?)
-        """, user_id, user_data.get("display_name"), user_data.get("email"),
-        user_data.get("images", [{}])[0].get("url", "") if user_data.get("images") else "", user_data.get("country", ""))
-        conn.commit()
-        if debug_mode:
-            gui.log(f"Inserted data for user {user_id}", level="info")
-            logger.info(f"Inserted data for user {user_id}")
+        display_name = user_data.get("display_name")
+        email = user_data.get("email")
+        profile_image_url = (
+            user_data.get("images", [{}])[0].get("url", "") if user_data.get("images") else ""
+        )
+        country = user_data.get("country", "")
+        # Check if user exists and update information if needed
+        cursor.execute("SELECT COUNT(*) FROM Users WHERE user_id = ?", user_id)
+        user_exists = cursor.fetchone()[0] > 0
+        
+        if update:
+            
+
+            if user_exists:
+                cursor.execute(
+                    """
+                    UPDATE Users
+                    SET display_name = ?, email = ?, profile_image_url = ?, country = ?
+                    WHERE user_id = ?
+                    """,
+                    display_name, email, profile_image_url, country, user_id
+                )
+                conn.commit()
+                if debug_mode:
+                    gui.log(f"Updated data for user {user_id}", level="info")
+                    logger.info(f"Updated data for user {user_id}")
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO Users (user_id, display_name, email, profile_image_url, country)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    user_id, display_name, email, profile_image_url, country
+                )
+                conn.commit()
+                if debug_mode:
+                    gui.log(f"Inserted data for user {user_id}", level="info")
+                    logger.info(f"Inserted data for user {user_id}")
+        else:
+            if user_exists:
+                return
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO Users (user_id, display_name, email, profile_image_url, country)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    user_id, display_name, email, profile_image_url, country
+                )
+                conn.commit()
+                if debug_mode:
+                    gui.log(f"Inserted data for user {user_id}", level="info")
+                    logger.info(f"Inserted data for user {user_id}")
+            cursor.execute(
+                """
+                INSERT INTO Users (user_id, display_name, email, profile_image_url, country)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                user_id, display_name, email, profile_image_url, country
+            )
+            conn.commit()
+            if debug_mode:
+                gui.log(f"Inserted data for user {user_id}", level="info")
+                logger.info(f"Inserted data for user {user_id}")
+
     else:
         if debug_mode or error_mode:
             gui.status(f"Failed to fetch data for user {user_id}", status="error")

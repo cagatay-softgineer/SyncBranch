@@ -1,0 +1,1 @@
+streamlit run sync-branch\server\app_streamlit.py

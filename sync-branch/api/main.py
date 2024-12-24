@@ -41,6 +41,7 @@ gui = CmdGUI()
 DEBUG_MODE = '--debug' in sys.argv
 WARNING_MODE = '--warning' in sys.argv
 ERROR_MODE = '--error' in sys.argv
+UPDATE_MODE = '--upt' in sys.argv
 
 load_dotenv()
 
@@ -57,7 +58,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 CONNECTION_STRING = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={DB_HOST},{DB_PORT};DATABASE={DB_NAME};UID={DB_USER};PWD={DB_PASSWORD}"
 
 # Function to process user data and playlists
-def process_user_data(user_id, conn, cursor, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE):
+def process_user_data(user_id, conn, cursor, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE, UPDATE = True):
     try:
         # Get an access token for the 'Get User Profile' request type
         access_token = get_access_token_for_request("Get User Profile")
@@ -69,7 +70,7 @@ def process_user_data(user_id, conn, cursor, debug_mode=DEBUG_MODE, warning_mode
                 gui.log(f"Inserting data for new user: {user_id}", level="info")
                 logger.info(f"Inserting data for new user: {user_id}")
             try:
-                insert_user_data(user_id, headers, cursor, conn)
+                insert_user_data(user_id, headers, cursor, conn, update=UPDATE)
             except AttributeError as e:
                 if debug_mode or error_mode:
                     gui.status(f"AttributeError encountered for user {user_id} during data insertion: {e}", status="error")
@@ -111,7 +112,7 @@ def update_csv_status(CSV_path, user_id):
             csvwriter.writerow(row)
 
 # Main function
-def main(CSV_path, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE):
+def main(CSV_path, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=ERROR_MODE, update_mode = UPDATE_MODE):
     # Connect to SQL Server
     try:
         conn = pyodbc.connect(CONNECTION_STRING)
@@ -137,7 +138,7 @@ def main(CSV_path, debug_mode=DEBUG_MODE, warning_mode=WARNING_MODE, error_mode=
                 if processed == '0':
                     gui.log(f"Processing user: {user_id}", level="info")
                     logger.info(f"Processing user: {user_id}")
-                    success = process_user_data(user_id, conn, cursor)
+                    success = process_user_data(user_id, conn, cursor, UPDATE=update_mode)
 
                     # Mark user as processed if successful
                     if success:

@@ -179,3 +179,7 @@ service_status.db
 .vscode
 sync-branch/model/tracks_uri_data.json
 sync-branch/model/audio_features_data.json
+similarity_results_area_iou.csv
+health_data.db
+health_data.db-shm
+health_data.db-wal

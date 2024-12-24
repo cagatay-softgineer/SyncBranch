@@ -1,0 +1,1 @@
+streamlit run sync-branch\app\register_to_dashboard_streamlit_app.py

@@ -247,6 +247,8 @@ ORDER BY
         data, description = execute_query_with_logging(query, db_name, params=params, fetch=True)
         columns = [desc[0] for desc in description]
         result = [dict(zip(columns, row)) for row in data]
+        if result == []:
+            result = [{"Error":"User Don't have recent!"}] 
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

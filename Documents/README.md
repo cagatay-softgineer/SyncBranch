@@ -71,18 +71,71 @@ Aşağıdaki özet, ekimde başlayan ve aralık ayına kadar uzanan bir proje pl
 - **Aralık (Ön Yüz Geliştirme & Testler)**  
   - Frontend entegrasyonu, özelliklerin birleştirilmesi, test ve hata ayıklama, kullanıcı kabul testleri.
 
-*(Ekteki Gantt diyagramı projedeki iş paketlerini ve zamanlamayı detaylı olarak göstermektedir.)*
+*(Ekteki [Gantt Diagramı](#gantt-di̇yagrami)   projedeki iş paketlerini ve zamanlamayı detaylı olarak göstermektedir.)*
+
 
 ### 5.2 Teknoloji Yığını
-- **Backend**: Python (FastAPI)  
-- **Veritabanı**: Microsoft SQL Server  
-- **Frontend**: Flutter (Mobil uygulama)  
-- **API Entegrasyonu**: Spotify API (müzik verilerini çekme ve analiz)  
-- **Kütüphaneler & Araçlar**:  
-  - FastAPI (hızlı geliştirme ve yüksek performans)  
-  - PyODBC, Pandas, NumPy, Matplotlib/Seaborn  
-- **Versiyon Kontrol / Proje Yönetimi**: Git & GitHub, JIRA  
-- **Test & Dokümantasyon Araçları**: Postman (API testleri), GitHub Wiki veya Confluence (dokümantasyon)
+
+Aşağıda projede kullanılan temel teknolojilerin **kısa açıklamaları**, **neden seçildikleri** ve **nasıl kullanıldıkları** belirtilmiştir:
+
+1. **Backend: Python (FastAPI)**
+   - **Neden Seçildi?**  
+     - **Performans**: FastAPI, asenkron (async) desteği ile yüksek performans ve hız sağlar.  
+     - **Kolay Geliştirme**: Python ekosisteminin zengin kütüphaneleri ve paketleri, hızlı prototip geliştirme imkânı sunar.  
+     - **Dokümantasyon**: Otomatik Swagger/OpenAPI entegrasyonu ile API dokümantasyonu zahmetsizce oluşturulabilir.  
+   - **Kullanım Senaryoları**:  
+     - Spotify API’den veri çekme ve analiz sonuçlarını veritabanına kaydetme.  
+     - Kullanıcı doğrulama (MFA, JWT token), sosyal etkileşim (mesajlaşma) uç noktaları.  
+     - Gerçek zamanlı bildirimlerin veya anlık işlemlerin (WebSocket, long polling) yönetimi (opsiyonel).
+
+2. **Veritabanı: Microsoft SQL Server**
+   - **Neden Seçildi?**  
+     - **Kurumsal Düzey**: Büyük hacimli veriler için ölçeklenebilir ve güvenilir bir altyapı sunar.  
+     - **Araç Desteği**: SQL Server Management Studio (SSMS) gibi gelişmiş yönetim araçları.  
+     - **Windows Ağırlıklı Ortamlar**: Projenin barındırma veya kurumsal gereklilikleri MS ekosistemini gerektiriyorsa uygun bir tercih.  
+   - **Kullanım Senaryoları**:  
+     - Kullanıcı profili ve müzik analizi verilerinin saklanması (tablo, ilişki, index yapıları).  
+     - Güvenlik ve yedekleme işlemlerinde (transaction log, mirroring, replication) sağlam altyapı sağlama.
+
+3. **Frontend: Flutter (Mobil Uygulama)**
+   - **Neden Seçildi?**  
+     - **Çapraz Platform**: Tek kod tabanıyla hem iOS hem de Android için hızlı geliştirme.  
+     - **Yüksek Performans**: Doğrudan native ARM kod derlemesi ve GPU hızlandırmasıyla akıcı animasyonlar.  
+     - **Zengin Widget Ekosistemi**: Google tarafından desteklenen widget kütüphanesi sayesinde modern arayüz tasarımı.  
+   - **Kullanım Senaryoları**:  
+     - Kullanıcının dinleme geçmişi, analiz sonuçları ve sosyal etkileşim ekranlarını tek bir mobil uygulamada sunmak.  
+     - Gerçek zamanlı bildirimleri (push notifications) platform bağımsız alabilmek.
+
+4. **API Entegrasyonu: Spotify API (Müzik Verilerini Çekme ve Analiz)**
+   - **Neden Seçildi?**  
+     - **Zengin Müzik Veritabanı**: Şarkılar, sanatçılar, albümler, çalma listeleri ve dinleme geçmişi gibi çeşitli verileri sağlar.  
+     - **Kullanıcı İzin Sistemi (OAuth)**: Güvenli API erişimi için standart token mekanizmaları.  
+   - **Kullanım Senaryoları**:  
+     - Kullanıcıların dinleme geçmişini eş zamanlı veya periyodik olarak çekme.  
+     - Şarkı özellikleri (tempo, energy, danceability vb.) üzerinden analiz yapma.  
+   - **Dikkat Edilecek Noktalar**:  
+     - **Rate Limits (Kota)**: Aşımı engellemek için caching veya batch işleme stratejileri kullanma.  
+     - **OAuth**: Kullanıcı token yenileme ve yönetimi doğru yapılmalı.
+
+5. **Kütüphaneler & Araçlar**
+   - **FastAPI**  
+     - **Detay**: Modern, asenkron tabanlı Python web framework’ü; otomatik şema (OpenAPI) üretimi ve async/await desteğiyle öne çıkar.  
+   - **PyODBC**  
+     - **Detay**: Python’dan Microsoft SQL Server’a erişim sağlamak için kullanılan sürücü. SQL sorgularını göndermek ve sonuçlarını almak için kullanılır.  
+   - **Pandas, NumPy, Matplotlib/Seaborn**  
+     - **Detay**: Veri analizi, sayısal işlemler ve görselleştirme için temel kütüphaneler. Dinleme istatistiklerini hesaplamak, grafikleri oluşturmak için tercih edilir.
+
+6. **Versiyon Kontrol / Proje Yönetimi**
+   - **Git & GitHub**  
+     - **Detay**: Kod versiyonlaması, pull request’ler ile takım içi kod incelemeleri, CI/CD entegrasyonu.  
+   - **JIRA**  
+     - **Detay**: Proje yönetimi ve iş takibi; kullanıcı hikayeleri, sprint planlaması ve backlog yönetimi için kullanılır.
+
+7. **Test & Dokümantasyon Araçları**
+   - **Postman**  
+     - **Detay**: API uç noktalarını manuel veya otomatik test etme, koleksiyonlar ve ortamlara göre test akışları oluşturma.  
+   - **GitHub Wiki veya Confluence**  
+     - **Detay**: Proje gereksinimleri, tasarım dökümanları, mimari notlar ve diğer teknik dokümantasyonu saklamak ve paylaşmak için.
 
 ---
 
@@ -447,6 +500,7 @@ Bu tablo, **proje risklerinin** daha yakından takip edilmesi ve **oluşmadan ö
 - **Kullanıcı Kabul Testleri & Dağıtım**: Aralık ortası – Aralık sonu
 
 *(Detaylı Gantt diyagramı ekte yer almaktadır.)*
+###### GANTT DİYAGRAMI
 [![Gantt Diagramı](Diagrams/Gantt.png "Gantt Diagramı")](Diagrams/Gantt.png)
 
 ### 14.2 Roller ve Sorumluluklar

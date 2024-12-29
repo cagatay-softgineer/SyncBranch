@@ -1,0 +1,18 @@
+# Analyzer bölümü
+analyzer:
+  errors:
+    sort_child_properties_last: ignore
+    prefer_const_constructors: ignore
+    avoid_print: ignore
+    unused_import: ignore
+    use_build_context_synchronously: ignore
+    unnecessary_const: ignore
+
+# Flutter için önerilen kurallar
+include: package:flutter_lints/flutter.yaml
+
+# Linter kuralları
+linter:
+  rules:
+    - avoid_print
+    - sort_child_properties_last

@@ -1,0 +1,78 @@
+name: syncbranch
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.0.0
+  animated_text_kit: ^4.2.2 
+  cupertino_icons: ^1.0.8
+  dio: ^5.1.0
+  flutter_secure_storage: ^8.0.0
+  provider: ^6.1.0
+  image_picker: ^0.8.7+3
+  permission_handler: ^10.4.3
+  card_swiper: ^2.0.4
+  url_launcher: ^6.1.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/icon1.png
+    - assets/images/icon2.png
+    - assets/images/icon3.png
+    - assets/images/icon7.png
+    - assets/images/icon8.png
+    - assets/images/grey_logo.png
+    - assets/images/pink_logo.png
+    - assets/images/purple_logo.png
+    - assets/images/apple.png
+    - assets/images/spotify.png
+    - assets/images/Spotify_Green.png
+    - assets/images/google_logo.png
+    - assets/images/google_logo1.png
+    - assets/images/remember_me.png
+
+
+
+  fonts:
+    - family: Skranji
+      fonts:
+        - asset: assets/fonts/Skranji-Regular.ttf
+        - asset: assets/fonts/Skranji-Bold.ttf
+
+  
+
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Black.ttf
+        - asset: assets/fonts/Montserrat-BlackItalic.ttf
+        - asset: assets/fonts/Montserrat-Bold.ttf
+        - asset: assets/fonts/Montserrat-BoldItalic.ttf
+        - asset: assets/fonts/Montserrat-ExtraBold.ttf
+        - asset: assets/fonts/Montserrat-ExtraBoldItalic.ttf
+        - asset: assets/fonts/Montserrat-ExtraLight.ttf
+        - asset: assets/fonts/Montserrat-ExtraLightItalic.ttf
+        - asset: assets/fonts/Montserrat-Italic.ttf
+        - asset: assets/fonts/Montserrat-Light.ttf
+        - asset: assets/fonts/Montserrat-LightItalic.ttf
+        - asset: assets/fonts/Montserrat-Medium.ttf
+        - asset: assets/fonts/Montserrat-MediumItalic.ttf
+        - asset: assets/fonts/Montserrat-Regular.ttf
+        - asset: assets/fonts/Montserrat-SemiBold.ttf
+        - asset: assets/fonts/Montserrat-SemiBoldItalic.ttf
+        - asset: assets/fonts/Montserrat-Thin.ttf
+        - asset: assets/fonts/Montserrat-ThinItalic.ttf
+

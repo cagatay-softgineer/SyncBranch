@@ -43,6 +43,7 @@ def retrieve_messages():
        OR msg.receiver_id = (SELECT user_id FROM users WHERE username = ?)
     ORDER BY msg.sent_at DESC;
     """
+
     messages, _ = execute_query_with_logging(
         query, 
         "flutter", 

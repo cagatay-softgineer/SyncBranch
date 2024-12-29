@@ -213,7 +213,7 @@ ORDER BY final_match_rate_percentage DESC;
 def get_recent():
     """Retrieve recent activity for a user based on user_id."""
     payload = request.json
-    user_id = payload.get('spotify_user_id')
+    user_id = payload.get('user_id')
     db_name = payload.get('db_name', 'primary')  # Default to the primary database
 
     if not user_id:

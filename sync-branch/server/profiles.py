@@ -9,7 +9,7 @@ profile_bp = Blueprint('profile', __name__)
 def view_profile():
     current_user = get_jwt_identity()
     query = """
-        SELECT username, email, spotify_user_id, bio
+        SELECT username, email, spotify_user_id, bio, profile_picture
         FROM users
         WHERE username = ?
     """
@@ -21,7 +21,8 @@ def view_profile():
             "username": user[0],
             "email": user[1],
             "spotify_user_id": user[2],
-            "bio" : user[3]
+            "bio" : user[3],
+            "profile_picture" : user[4]
         }), 200
     return jsonify({"error": "User not found"}), 404
 

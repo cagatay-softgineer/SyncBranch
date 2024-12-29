@@ -89,29 +89,98 @@ Aşağıdaki özet, ekimde başlayan ve aralık ayına kadar uzanan bir proje pl
 ## 6. Gereksinimler
 
 ### 6.1 Fonksiyonel Gereksinimler
-1. **Kullanıcı Doğrulama**  
-   - Kullanıcılar, güvenli giriş ve çok faktörlü kimlik doğrulama (MFA) işlemlerini gerçekleştirebilmelidir.  
-2. **Müzik Verisi Toplama ve Analizi**  
-   - Spotify API üzerinden dinleme geçmişi, şarkı özellikleri vb. veriler çekilerek analiz edilebilmelidir.  
-3. **Sosyal Etkileşim**  
-   - Kullanıcılar, mesajlaşma, engelleme/bildirme gibi sosyal fonksiyonları kullanabilmelidir.  
-4. **Bildirim Sistemi**  
-   - Yeni eşleşme, sohbet güncellemeleri gibi durumlar bildirim olarak kullanıcılara iletilmelidir.
+
+1. **Kullanıcı Doğrulama (Authentication)**
+   - **Açıklama**: Sistem, kullanıcıların güvenli bir şekilde giriş yapabilmesini sağlamalı; ayrıca çok faktörlü kimlik doğrulama (MFA) desteği bulunmalıdır.
+   - **Alt Gereksinimler**:
+     - Kullanıcı, kullanıcı adı/şifre kombinasyonu ile giriş yapabilmelidir.
+     - MFA aktif olduğunda, sistem SMS/e-posta/uygulama üzerinden ikinci faktörü doğrulamalıdır.
+     - Hatalı giriş denemeleri belirli bir eşiğe ulaştığında geçici hesap kilitleme veya hız sınırlaması (rate-limiting) uygulanmalıdır.
+   - **Kabul Kriterleri**:
+     - “Login” süreci başarılıysa kullanıcıya JWT veya benzeri bir yetkilendirme tokenı döndürülmelidir.
+     - MFA kodu yanlış girildiğinde “401 Unauthorized” veya “403 Forbidden” hata kodu döndürülmelidir.
+   - **Örnek Senaryo**: Kullanıcı, şifresini doğru girdikten sonra SMS ile gelen doğrulama kodunu sisteme girer ve giriş başarılı olur.
+
+2. **Müzik Verisi Toplama ve Analizi**
+   - **Açıklama**: Spotify API üzerinden kullanıcıların dinleme geçmişi, şarkı özellikleri (tempo, enerji, popülerlik vb.) çekilmeli ve analiz edilmelidir.
+   - **Alt Gereksinimler**:
+     - Uygulama, Spotify API kullanarak bir kullanıcının en az son X parça geçmişini alabilmelidir.
+     - Analiz modülü, ortalama tempo, dinleme sıklığı, popülerlik, vb. istatistikleri hesaplayabilmelidir.
+     - Veriler, performans amaçlı önbelleğe alınabilmeli veya gerektiğinde batch halinde işlenebilmelidir.
+   - **Kabul Kriterleri**:
+     - Spotify’dan çekilen verilerin %90 üzeri doğrulukla saklanması ve güncellenmesi.
+     - 100.000 kullanıcıya kadar veri analizi yapıldığında sistemin 5 saniye altında yanıt verebilmesi (örnek performans kriteri).
+   - **Örnek Senaryo**: Kullanıcı, uygulamaya bağlandığında en son dinlediği 10 şarkının ortalama temposu ve popülerliği hesaplanır, profil skoruna yansıtılır.
+
+3. **Sosyal Etkileşim**
+   - **Açıklama**: Kullanıcılar birbirleriyle etkileşime girebilmeli; mesajlaşma, engelleme veya şikayet/bildirme (report) gibi sosyal özelliklere sahip olmalıdır.
+   - **Alt Gereksinimler**:
+     - Kullanıcılar, gerçek zamanlı (veya yakın gerçek zamanlı) mesaj gönderip alabilmelidir (örneğin WebSocket veya push notifications).
+     - Uygunsuz içerik veya kullanıcılar, “Engelle” veya “Bildir” işleviyle sistem yöneticilerine iletilebilmelidir.
+     - Kullanıcıların arkadaş ekleme veya takip edebilme (opsiyonel) gibi fonksiyonları da desteklenebilir.
+   - **Kabul Kriterleri**:
+     - Mesajlar, gönderildikten sonra 1 saniyeden kısa sürede karşı tarafa ulaşabilmelidir.
+     - Engellenen kullanıcılar, engelleyen kullanıcıya mesaj veya etkileşim isteği gönderememelidir.
+   - **Örnek Senaryo**: Kullanıcı A, Kullanıcı B ile eşleştikten sonra sohbete başlar; B kaba davranınca A “Engelle” butonuna tıklar.
+
+4. **Bildirim Sistemi**
+   - **Açıklama**: Sistemde önemli olaylar (yeni eşleşme, mesaj, vb.) mobil cihaza bildirim olarak gitmelidir.
+   - **Alt Gereksinimler**:
+     - Mobil uygulama, hem iOS hem de Android platformlarında push bildirimlerini alabilmelidir.
+     - Bildirim, eşleşme skorunun yüksekliğine, yeni mesaj vb. durumlara göre özelleştirilebilir içerik taşıyabilmelidir.
+     - Bildirimler, kullanıcı dilediğinde kapatabileceği şekilde ayarlanabilmelidir (opsiyonel).
+   - **Kabul Kriterleri**:
+     - Gönderilen bildirimlerin %95 üzerinde teslim edilme oranına sahip olması.
+     - Kullanıcının bildirim geçmişinden son 10 bildirimi görebilmesi (opsiyonel).
+   - **Örnek Senaryo**: Eşleşme algoritması başarılı bir “benzerlik” bulduğunda anlık bildirim gönderir; “Yeni eşleşme: %80 benzerlik”.
+
+---
 
 ### 6.2 Fonksiyonel Olmayan Gereksinimler (Non-Fonksiyonel)
-- **Performans**: Minimum gecikme süresi, yüksek kullanım senaryolarını destekleyecek altyapı.  
-- **Güvenlik**: SSL/TLS ile veri transferi, veritabanında veri şifreleme, kullanıcı verilerinin korunması.  
-- **Ölçeklenebilirlik**: Artan kullanıcı trafiğine göre yatay veya dikey ölçeklendirme.  
-- **Kullanılabilirlik (Usability)**: Sezgisel arayüz, karışık fonksiyonların kolay erişilebilir olması.  
-- **Bakım Kolaylığı**: Modüler kod yapısı ve temiz dokümantasyon.
+
+1. **Performans**
+   - **Açıklama**: Minimum gecikme süresi, yüksek kullanım senaryolarını destekleyecek altyapı gereklidir.
+   - **Detaylar**:
+     - Müzik verisi analizi en fazla 3 saniye içinde sonuçlanmalıdır (ör. 10.000 eşzamanlı kullanıcı senaryosu).
+     - Mesajlaşma servisi, 1 saniye altında yanıt verebilecek şekilde ölçeklenmelidir.
+
+2. **Güvenlik**
+   - **Açıklama**: Veri transferinde SSL/TLS kullanımı, veritabanında kritik bilgileri (şifre, token, vb.) şifreleme, kullanıcı verilerinin bütünlüğünü sağlama.
+   - **Detaylar**:
+     - Veritabanında hassas alanlar (örn. kullanıcı parolaları) bcrypt, Argon2 veya PBKDF2 gibi güvenli hashing algoritmalarıyla saklanmalıdır.
+     - Penetrasyon testleri her major sürüm öncesi veya yılda en az bir kez yapılmalıdır.
+
+3. **Ölçeklenebilirlik**
+   - **Açıklama**: Artan kullanıcı trafiğine göre yatay veya dikey ölçekleme desteği.
+   - **Detaylar**:
+     - Trafik artışına göre otomatik ölçekleme (auto-scaling) politikaları tanımlanmalı.
+     - Mikroservis yaklaşımı veya container’lar (Docker/Kubernetes) kullanılarak yük dengesi sağlanabilir.
+
+4. **Kullanılabilirlik (Usability)**
+   - **Açıklama**: Arayüz, kullanıcılar için sezgisel ve basit olmalıdır.
+   - **Detaylar**:
+     - Navigasyon menüleri en fazla 3 seviyeden oluşmalı.
+     - Kullanıcılar, temel işlevleri (ör. müzik geçmişini görüntüleme, mesajlaşma) 3 tık veya daha az adımda gerçekleştirebilmelidir.
+
+5. **Bakım Kolaylığı**
+   - **Açıklama**: Kodun modüler yapıda olması, gerekli dokümantasyonun bulunması, test kapsamının yüksek olması.
+   - **Detaylar**:
+     - Sürüm kontrol araçları (Git) üzerinde kod incelemesi (code review) ve sürekli entegrasyon (CI) süreçleri tanımlanmalıdır.
+     - Değişiklik yönetimi, Jira veya benzeri bir platformla takip edilmelidir.
+
+---
 
 ### 6.3 Kısıtlar ve Varsayımlar
-- **Kısıtlar**:  
-  - Spotify API’nin kotaları ve veri erişim sınırları.  
-  - Proje süresi (3 ay gibi kısa sürelerde MVP’nin tamamlanması).  
-- **Varsayımlar**:  
-  - Kullanıcıların Spotify hesaplarına erişim izni verecekleri.  
-  - Mobil uygulamanın iOS ve Android platformlarında sorunsuz çalışması.
+
+1. **Kısıtlar**
+   - **Spotify API Kotası**: Spotify API’nin günlük veya aylık çağrı limitleri ve hız kısıtlamaları uygulanabilir. Ek lisans/premium plan gerekebilir.
+   - **Proje Süresi**: 3 aylık geliştirme sürecinde **MVP** seviyesinde fonksiyonları tamamlamak hedeflenir.
+   - **Bütçe**: Bulut altyapısı, premium API anlaşması veya ek güvenlik araçları için ek maliyet kısıtlamaları olabilir.
+
+2. **Varsayımlar**
+   - **Kullanıcı İzni**: Kullanıcıların, Spotify hesaplarını bağlamayı kabul edeceği ve API erişimi için gereken izinleri vereceği varsayılır.
+   - **Çoklu Platform Desteği**: Mobil uygulamanın iOS ve Android platformlarında benzer deneyim sunacağı varsayılır (Flutter gibi çapraz platform araçlarıyla).
+   - **Veri Bütünlüğü**: Spotify API’nin döndüreceği verilerde tutarlılık ve doğruluk beklenir; aksi halde veriler eksik veya hatalı olabilir.
 
 ---
 

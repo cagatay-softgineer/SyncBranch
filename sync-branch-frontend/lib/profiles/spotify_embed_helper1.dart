@@ -25,7 +25,7 @@ class SpotifyEmbedWidget extends StatelessWidget {
     final type = match.group(2); // track, artist, or playlist
     final id = match.group(3); // Extract only the ID before '?'
     final embedUrl = 'https://open.spotify.com/embed/$type/$id';
-    print(embedUrl);
+    //print(embedUrl);
     return Container(
       width: double.infinity,
       height: 100,
@@ -41,7 +41,7 @@ class SpotifyEmbedWidget extends StatelessWidget {
           mediaPlaybackRequiresUserGesture: false,
         ),
         onLoadStop: (controller, url) {
-          print('WebView loaded: $url');
+          //print('WebView loaded: $url');
         },
         onLoadError: (controller, url, code, message) {
           print('WebView error: $message');

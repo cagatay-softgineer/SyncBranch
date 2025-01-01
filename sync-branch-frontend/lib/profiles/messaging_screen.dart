@@ -13,7 +13,7 @@ Widget buildMessageContent(String message) {
   );
 
   if (regex.hasMatch(message)) {
-    print(message);
+    //print(message);
     return CustomSpotifyEmbed(embedUrl: message); // Use the embed widget
   } else {
     return Text(
@@ -86,19 +86,43 @@ class _MessagingScreenState extends State<MessagingScreen> {
     });
   }
 
-  Future<List<Message>> _loadAllMessages() async {
-    final allMessages = await _chatServices.fetchMessages();
+Future<List<Message>> _loadAllMessages() async {
+  final allMessages = await _chatServices.fetchMessages();
 
-    // Sadece current user ile ilgili mesajları filtrele
-    final filteredMessages = allMessages.where((message) {
-      return message.sender == widget.displayName ||
-          message.receiver == widget.displayName;
-    }).toList();
+  // Filter messages related to the current user
+  final filteredMessages = allMessages.where((message) {
+    return message.sender == widget.displayName ||
+        message.receiver == widget.displayName;
+  }).toList();
 
-    // Mesajları zaman damgasına göre sırala
-    filteredMessages.sort(Message.compareByTimestamp);
-    return filteredMessages;
+  // Sort messages by timestamp
+  filteredMessages.sort(Message.compareByTimestamp);
+  //print("FILTERED MESSAGES : ${filteredMessages.map((m) => m.toJson()).toList()}");
+
+  // Mark unread messages as read
+  for (var message in filteredMessages) {
+    //print("#######################################################");
+    //print(message.receiver);
+    //print(message.isRead);
+    //print(message.messageId);
+    //print(message.messageId.toString());
+    //print("#######################################################");
+
+    if (!message.isRead && message.sender == widget.displayName) {
+      try {
+        //print('Marking message as read: ${message.messageId}');
+        await _chatServices.markMessageAsRead(message.messageId.toString());
+        //message.isRead = true; // Update local state to reflect change
+      } catch (e) {
+        print('Failed to mark message as read: $e');
+      }
+    }
   }
+
+  return filteredMessages;
+}
+
+
 
   Future<void> _sendMessage() async {
     final messageText = _messageController.text.trim();
@@ -121,9 +145,14 @@ class _MessagingScreenState extends State<MessagingScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+ @override
+Widget build(BuildContext context) {
+  return WillPopScope(
+    onWillPop: () async {
+      Navigator.pop(context, true); // Notify MainScreen of updates
+      return false; // Prevent default pop behavior
+    },
+    child: Scaffold(
       appBar: AppBar(
         title: Text('Mesajlar (${widget.displayName})'),
       ),
@@ -143,41 +172,41 @@ class _MessagingScreenState extends State<MessagingScreen> {
                 } else {
                   final messages = snapshot.data!;
                   return ListView.builder(
-  itemCount: messages.length,
-  itemBuilder: (context, index) {
-    final message = messages[index];
-    final isSentByUser = message.sender == widget.displayName;
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final message = messages[index];
+                      final isSentByUser = message.sender == widget.displayName;
 
-    return Align(
-      alignment: isSentByUser
-          ? Alignment.centerLeft
-          : Alignment.centerRight,
-      child: Container(
-        margin: const EdgeInsets.symmetric(
-            vertical: 5, horizontal: 10),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: isSentByUser
-              ? const Color(0xffbbc2c8)
-              : const Color(0xff6e7ccd),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            buildMessageContent(message.message), // Display the embed or plain text
-            const SizedBox(height: 5),
-            Text(
-              message.timestamp,
-              style: const TextStyle(
-                  fontSize: 12, color: Colors.black54),
-            ),
-          ],
-        ),
-      ),
-    );
-  },
-);
+                      return Align(
+                        alignment: isSentByUser
+                            ? Alignment.centerLeft
+                            : Alignment.centerRight,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 5, horizontal: 10),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isSentByUser
+                                ? const Color(0xffbbc2c8)
+                                : const Color(0xff6e7ccd),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              buildMessageContent(message.message),
+                              const SizedBox(height: 5),
+                              Text(
+                                message.timestamp,
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.black54),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
                 }
               },
             ),
@@ -204,6 +233,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

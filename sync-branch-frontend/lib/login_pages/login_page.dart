@@ -75,6 +75,7 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         final token = response['access_token'];
         final user_id = response['user_id'];
+        //print("Saved USER_ID : $user_id");
         if (token != null) {
           await _secureStorage.write(key: 'jwt_token', value: token);
           await _secureStorage.write(key: 'user_id', value: user_id);

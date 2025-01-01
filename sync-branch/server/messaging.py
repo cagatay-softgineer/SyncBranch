@@ -72,10 +72,30 @@ def retrieve_messages():
 @messaging_bp.route('/mark', methods=['POST'])
 @jwt_required()
 def mark_message():
-    data = request.json
-    message_id = data.get('message_id')
-    status = data.get('is_read')  # '1' or '0'
+    try:
+        # Parse incoming JSON data
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
 
-    query = "UPDATE messages SET is_read = ? WHERE message_id = ?"
-    execute_query_with_logging(query, "flutter", (status, message_id))
-    return jsonify({"message": f"Message marked as {status}"}), 200
+        message_id = data.get('message_id')
+        status = data.get('is_read')  # Expecting '1' or '0'
+
+        # Validate inputs
+        if message_id is None or status is None:
+            return jsonify({"error": "Missing 'message_id' or 'is_read'"}), 400
+
+        if status not in [0, 1, "0", "1"]:
+            return jsonify({"error": "'is_read' must be 0 or 1"}), 400
+
+        # Convert status to integer (if needed)
+        status = int(status)
+
+        # Update the database
+        query = "UPDATE messages SET is_read = ? WHERE message_id = ?"
+        execute_query_with_logging(query, "flutter", (status, message_id))
+
+        return jsonify({"message": f"Message {message_id} marked as {'read' if status == 1 else 'unread'}"}), 200
+    except Exception as e:
+        # Handle unexpected errors
+        return jsonify({"error": str(e)}), 500

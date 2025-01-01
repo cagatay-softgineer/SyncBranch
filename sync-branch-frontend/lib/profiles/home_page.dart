@@ -41,8 +41,8 @@ class _HomePageState extends State<HomePage> {
   const url = 'http://api-sync-branch.yggbranch.dev/database/get_recent';
   final token = await secureStorage.read(key: 'jwt_token');
   String? spotifyId;
-  print("#################################");
-  print(token);
+  //print("#################################");
+  //print(token);
 
   final response = await _dio.get(
         'https://api-sync-branch.yggbranch.dev/profile/view',
@@ -52,8 +52,8 @@ class _HomePageState extends State<HomePage> {
       );
   spotifyId = response.data['spotify_user_id'];
   profile_picture = response.data['profile_picture'];
-  print(spotifyId);
-  print("#################################");
+  //print(spotifyId);
+  //print("#################################");
   try {
     final response = await _dio.post(
       url,
@@ -66,7 +66,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
 
-    print("data $response");
+    //print("data $response");
     if (response.statusCode == 200) {
       setState(() {
         _recentSongs = List<Map<String, dynamic>>.from(response.data);

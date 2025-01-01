@@ -31,7 +31,7 @@ class ApiService {
         ),
       );
 
-      print('Response Data: ${response.data}');
+      //print('Response Data: ${response.data}');
 
       if (response.data is Map<String, dynamic>) {
         // Check if the response contains access_token
@@ -41,7 +41,7 @@ class ApiService {
             key: 'access_token',
             value: response.data['access_token'],
           );
-          print('Access token stored securely.');
+          //print('Access token stored securely.');
         }
 
         return response.data;

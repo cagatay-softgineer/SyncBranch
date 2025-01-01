@@ -125,38 +125,72 @@ class _SenderListScreenState extends State<SenderListScreen> {
             //print("as $sendersLastMessages");
 
             return ListView.builder(
-              itemCount: sendersLastMessages.length,
-              itemBuilder: (context, index) {
-                final message = sendersLastMessages[index];
-                return ListTile(
-                  leading: CircleAvatar(
-        backgroundImage: message.senderpicture != ""
-            ? NetworkImage(message.senderpicture) // Fetch image from URL
-            : const AssetImage('https://sync-branch.yggbranch.dev/assets/default_user.png') as ImageProvider, // Default image if no URL
-        radius: 24, // Adjust the size of the avatar
-      ),
-                  title: Text(
-                    'Gönderen: ${message.sender}',
-                    style: const TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
+  itemCount: sendersLastMessages.length,
+  itemBuilder: (context, index) {
+    final message = sendersLastMessages[index];
+
+    // Calculate the number of unread messages for this sender
+    final int unreadCount = messages
+        .where((msg) => msg.sender == message.sender && !msg.isRead)
+        .length;
+
+    return ListTile(
+      leading: Stack(
+        children: [
+          CircleAvatar(
+            backgroundImage: message.senderpicture.isNotEmpty
+                ? NetworkImage(message.senderpicture)
+                : const AssetImage(
+                        'https://sync-branch.yggbranch.dev/assets/default_user.png')
+                    as ImageProvider,
+            radius: 24,
+          ),
+          if (unreadCount > 0)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '$unreadCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
                   ),
-                  subtitle: Text(
-                      'Son Mesaj: ${message.message}\nZaman: ${_formatTimestamp(message.timestamp)}',style: const TextStyle(color: Colors.white)),
-                  isThreeLine: true,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MessagingScreen(
-                          baseUrl: widget.baseUrl,
-                          displayName: message.sender,
-                          apiService: ApiService(),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            );
+                ),
+              ),
+            ),
+        ],
+      ),
+      title: Text(
+        'Gönderen: ${message.sender}',
+        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+      subtitle: Text(
+        'Son Mesaj: ${message.message}\nZaman: ${_formatTimestamp(message.timestamp)}',
+        style: const TextStyle(color: Colors.white),
+      ),
+      isThreeLine: true,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MessagingScreen(
+              baseUrl: widget.baseUrl,
+              displayName: message.sender,
+              apiService: ApiService(),
+            ),
+          ),
+        );
+      },
+    );
+  },
+);
           }
         },
       ),

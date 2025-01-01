@@ -32,4 +32,15 @@ class Message {
   static int compareByTimestamp(Message a, Message b) {
     return DateTime.parse(a.timestamp).compareTo(DateTime.parse(b.timestamp));
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'message_id': messageId,
+      'sender': sender,
+      'receiver': receiver,
+      'message': message,
+      'timestamp': timestamp,
+      'is_read': isRead,
+      'sender_picture': senderpicture,
+    };
+  }
 }

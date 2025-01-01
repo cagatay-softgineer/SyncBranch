@@ -53,7 +53,7 @@ class _MatchPageState extends State<MatchPage> {
         isLoading = false;
       });
 
-      print('Spotify ID: $spotifyId');
+      //print('Spotify ID: $spotifyId');
 
       if (spotifyId != null) {
         fetchTopMatches();
@@ -84,7 +84,7 @@ class _MatchPageState extends State<MatchPage> {
 
       setState(() {
         topMatches = response.data;
-        print("topMatches $topMatches");
+        //print("topMatches $topMatches");
       });
     } catch (e) {
       print("Error fetching top matches: $e");

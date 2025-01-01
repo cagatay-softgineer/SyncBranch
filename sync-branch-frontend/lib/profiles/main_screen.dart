@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:syncbranch/profiles/home_page.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'match_page.dart';
 import 'messaging_inbox.dart';
 import 'profile_page.dart';
 import '../settings/settings.dart';
+import 'chat_services.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -14,6 +16,9 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0; // Aktif sekmeyi tutar
+  int _unreadCount = 0; // Unread message count
+  final ChatServices _chatServices = ChatServices();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   final List<Widget> _pages = [
     const HomePage(),
@@ -21,6 +26,43 @@ class _MainScreenState extends State<MainScreen> {
     const ProfilePage(),
     SenderListScreen(baseUrl: 'https://api-sync-branch.yggbranch.dev/'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnreadCount(); // Fetch unread messages on app start
+  }
+
+  Future<int> _getUnreadMessageCount() async {
+    // Fetch all messages
+    final allMessages = await _chatServices.fetchMessages();
+    final userId = await _secureStorage.read(key: 'user_id');
+
+    if (userId == null) {
+      print('Error: User ID is null');
+      return 0;
+    }
+
+    // Filter unread messages
+    final unreadMessages = allMessages.where((message) {
+      //print('Message: ${message.toJson()}'); // Debug: Ensure messages are correct
+      return message.receiver == userId && !message.isRead; // Use boolean
+    }).toList();
+
+    return unreadMessages.length;
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final count = await _getUnreadMessageCount();
+      setState(() {
+        _unreadCount = count;
+        //print('Unread Count Updated: $_unreadCount');
+      });
+    } catch (e) {
+      print('Error loading unread count: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,28 +165,56 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  Widget _buildIcon(IconData icon, int index) {
-    final bool isSelected = _selectedIndex == index;
+Widget _buildIcon(IconData icon, int index) {
+  final bool isSelected = _selectedIndex == index;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      transform: isSelected
-          ? Matrix4.translationValues(0, -10, 0)
-          : Matrix4.translationValues(0, 0, 0),
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.black : Colors.transparent,
-          borderRadius: BorderRadius.circular(30),
-          border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
-        ),
-        child: Icon(
-          icon,
-          size: 30,
-          color: isSelected ? const Color(0xFFE040FB) : Colors.white70,
+  return Stack(
+    children: [
+      AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        transform: isSelected
+            ? Matrix4.translationValues(0, -10, 0)
+            : Matrix4.translationValues(0, 0, 0),
+        child: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.black : Colors.transparent,
+            borderRadius: BorderRadius.circular(30),
+            border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+          ),
+          child: Icon(
+            icon,
+            size: 30,
+            color: isSelected ? const Color(0xFFE040FB) : Colors.white70,
+          ),
         ),
       ),
-    );
-  }
+      if (index == 3 && _unreadCount > 0) // Only add badge for Messages tab
+        Positioned(
+          right: 0,
+          top: 0,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            transform: isSelected
+            ? Matrix4.translationValues(0, -10, 0)
+            : Matrix4.translationValues(0, 0, 0),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '$_unreadCount',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+    ],
+  );
+}
 }

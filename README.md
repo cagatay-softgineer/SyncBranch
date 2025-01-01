@@ -1,4 +1,4 @@
-
+.
 # SyncBranch: Music-Driven Social Connections
 
 SyncBranch is a mobile app that leverages Spotify's audio features API to create personalized user profiles based on music preferences. It connects users with similar or complementary music tastes, enhancing music discovery and social interaction.

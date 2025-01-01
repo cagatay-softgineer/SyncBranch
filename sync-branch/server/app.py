@@ -17,7 +17,6 @@ from dotenv import load_dotenv
 import argparse
 import os
 
-
 gui = CmdGUI()
 
 load_dotenv()
@@ -172,7 +171,6 @@ def internal_server_error(e):
     gui.log(f"Internal server error: {e}", level="error")
     logger.error(f"Internal server error: {e}")
     return render_template('error.html', error_message="An internal server error occurred. Please try again later."), 500
-
 
 @jwt.unauthorized_loader
 def unauthorized_loader(callback):

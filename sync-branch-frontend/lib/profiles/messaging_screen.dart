@@ -4,6 +4,24 @@ import 'message.dart';
 import 'dart:async';
 import 'package:syncbranch/services/api_service.dart';
 import 'package:syncbranch/login_pages/auto_scroll_to_end.dart';
+import 'spotify_embed_helper.dart';
+
+Widget buildMessageContent(String message) {
+  final regex = RegExp(
+    r'https://open\.spotify\.com(/intl-[\w-]+)?/(track|artist|playlist)/([\w\d?=&]+)',
+    caseSensitive: false,
+  );
+
+  if (regex.hasMatch(message)) {
+    print(message);
+    return CustomSpotifyEmbed(embedUrl: message); // Use the embed widget
+  } else {
+    return Text(
+      message,
+      style: const TextStyle(fontSize: 16),
+    );
+  }
+}
 
 class MessagingScreen extends StatefulWidget {
   final String baseUrl;
@@ -56,9 +74,10 @@ class _MessagingScreenState extends State<MessagingScreen> {
   }
 
   void _startAutoRefresh() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
       setState(() {
         _messagesFuture = _loadAllMessages();
+        _scrollToBottom();
       });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -83,12 +102,12 @@ class _MessagingScreenState extends State<MessagingScreen> {
 
   Future<void> _sendMessage() async {
     final messageText = _messageController.text.trim();
-    print(messageText);
+    //print(messageText);
     if (messageText.isNotEmpty) {
-      print("widget ${widget.displayName}");
+      //print("widget ${widget.displayName}");
       final success =
           await _chatServices.sendMessage(widget.displayName, messageText);
-      print(success);
+      //print(success);
       if (success) {
         setState(() {
           _messagesFuture = _loadAllMessages();
@@ -124,44 +143,41 @@ class _MessagingScreenState extends State<MessagingScreen> {
                 } else {
                   final messages = snapshot.data!;
                   return ListView.builder(
-                    controller: _scrollController, // Controller ekledik
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final message = messages[index];
-                      final isSentByUser = message.sender == widget.displayName;
-                      return Align(
-                        alignment: isSentByUser
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 5, horizontal: 10),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: isSentByUser
-                                ? Color(0xffbbc2c8)
-                                : Color(0xff6e7ccd),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                message.message,
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                message.timestamp,
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.black54),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
+  itemCount: messages.length,
+  itemBuilder: (context, index) {
+    final message = messages[index];
+    final isSentByUser = message.sender == widget.displayName;
+
+    return Align(
+      alignment: isSentByUser
+          ? Alignment.centerLeft
+          : Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.symmetric(
+            vertical: 5, horizontal: 10),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isSentByUser
+              ? const Color(0xffbbc2c8)
+              : const Color(0xff6e7ccd),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            buildMessageContent(message.message), // Display the embed or plain text
+            const SizedBox(height: 5),
+            Text(
+              message.timestamp,
+              style: const TextStyle(
+                  fontSize: 12, color: Colors.black54),
+            ),
+          ],
+        ),
+      ),
+    );
+  },
+);
                 }
               },
             ),

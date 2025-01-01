@@ -6,6 +6,7 @@ import 'package:syncbranch/authlib.dart';
 import 'message.dart';
 import 'chat_services.dart';
 import 'dart:async';
+import 'package:intl/intl.dart';
 
 class SenderListScreen extends StatefulWidget {
   final String baseUrl;
@@ -39,13 +40,22 @@ class _SenderListScreenState extends State<SenderListScreen> {
     _refreshTimer?.cancel();
     super.dispose();
   }
+  String _formatTimestamp(String timestamp) {
+    try {
+      final DateTime parsedDate = DateTime.parse(timestamp);
+      final DateFormat formatter = DateFormat('yyyy-MM-dd HH:mm');
+      return formatter.format(parsedDate);
+    } catch (e) {
+      return timestamp; // Return raw value if parsing fails
+    }
+  }
 
   Future<void> _loadCurrentUserId() async {
     try {
       currentUserId = await AuthService.getUserId() ?? "";
-      print("aaa $currentUserId");
+      //print("aaa $currentUserId");
     } catch (e) {
-      print("Error loading user ID: $e");
+      //print("Error loading user ID: $e");
       currentUserId = "";
     }
   }
@@ -60,8 +70,29 @@ class _SenderListScreenState extends State<SenderListScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      body: FutureBuilder<List<Message>>(
+      body: Stack(
+        children: [
+          // Gradient Background
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.fromRGBO(2, 0, 36, 1),
+                  Color.fromRGBO(20, 15, 77, 1),
+                  Color.fromRGBO(58, 16, 133, 1),
+                  Color.fromRGBO(106, 17, 203, 1),
+                  Color.fromRGBO(198, 25, 198, 1),
+                ],
+              ),
+            ),
+          ),
+      FutureBuilder<List<Message>>(
         future: _messagesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -91,19 +122,25 @@ class _SenderListScreenState extends State<SenderListScreen> {
 
             final List<Message> sendersLastMessages =
                 latestMessages.values.toList();
-            print("as $sendersLastMessages");
+            //print("as $sendersLastMessages");
 
             return ListView.builder(
               itemCount: sendersLastMessages.length,
               itemBuilder: (context, index) {
                 final message = sendersLastMessages[index];
                 return ListTile(
+                  leading: CircleAvatar(
+        backgroundImage: message.senderpicture != ""
+            ? NetworkImage(message.senderpicture) // Fetch image from URL
+            : const AssetImage('https://sync-branch.yggbranch.dev/assets/default_user.png') as ImageProvider, // Default image if no URL
+        radius: 24, // Adjust the size of the avatar
+      ),
                   title: Text(
                     'Gönderen: ${message.sender}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
                   ),
                   subtitle: Text(
-                      'Son Mesaj: ${message.message}\nZaman: ${message.timestamp}'),
+                      'Son Mesaj: ${message.message}\nZaman: ${_formatTimestamp(message.timestamp)}',style: const TextStyle(color: Colors.white)),
                   isThreeLine: true,
                   onTap: () {
                     Navigator.push(
@@ -122,6 +159,8 @@ class _SenderListScreenState extends State<SenderListScreen> {
             );
           }
         },
+      ),
+        ]
       ),
     );
   }

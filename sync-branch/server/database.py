@@ -253,3 +253,96 @@ ORDER BY
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@database_bp.route('/get_user_playlists', methods=['POST'])
+def get_user_playlists():
+    """Retrieve a user's playlists and associated tracks."""
+    payload = request.json
+    user_id = payload.get('user_id')
+    db_name = payload.get('db_name', 'primary')  # Default to the primary database
+
+    if not user_id:
+        return jsonify({"error": "User ID is required"}), 400
+
+    query = """
+    WITH PlaylistData AS (
+        SELECT 
+            up.playlist_id,
+            p.name AS playlist_name,
+            p.description AS playlist_description,
+            p.images AS playlist_images,
+            pt.track_id,
+            pt.added_at,
+            t.name AS track_name,
+            t.album_id,
+            t.images AS track_images,
+            a.name AS artist_name
+        FROM 
+            User_Playlists up
+        JOIN 
+            Playlists p ON up.playlist_id = p.playlist_id
+        JOIN 
+            Playlist_Tracks pt ON p.playlist_id = pt.playlist_id
+        JOIN 
+            Tracks t ON pt.track_id = t.track_id
+        JOIN 
+            Track_Artists ta ON t.track_id = ta.track_id
+        JOIN 
+            Artists a ON ta.artist_id = a.artist_id
+        WHERE 
+            up.user_id = ?
+    )
+    SELECT 
+        playlist_id,
+        playlist_name,
+        playlist_description,
+        playlist_images,
+        track_id,
+        track_name,
+        added_at,
+        track_images,
+        artist_name
+    FROM 
+        PlaylistData
+    ORDER BY 
+        playlist_id, added_at DESC;
+    """
+
+    try:
+        params = [user_id]
+        data, description = execute_query_with_logging(query, db_name, params=params, fetch=True)
+        columns = [desc[0] for desc in description]
+        result = [dict(zip(columns, row)) for row in data]
+
+        # Organize the data by playlists
+        playlists = {}
+        for row in result:
+            playlist_id = row['playlist_id']
+            if playlist_id not in playlists:
+                playlists[playlist_id] = {
+                    'playlist_name': row['playlist_name'],
+                    'playlist_description': row['playlist_description'],
+                    'playlist_image': row['playlist_images'],
+                    'tracks': []
+                }
+            # Check if the number of tracks already added is less than the limit
+            if len(playlists[playlist_id]['tracks']) < 50:  # Change 5 to your desired limit
+                playlists[playlist_id]['tracks'].append({
+                    'track_id': row['track_id'],
+                    'track_name': row['track_name'],
+                    'added_at': row['added_at'],
+                    'track_images': row['track_images'],
+                    'artist_name': row['artist_name']
+                })
+
+
+        # Convert playlists dict to a list for JSON response
+        response = [
+            {
+                'playlist_id': playlist_id,
+                **details
+            } for playlist_id, details in playlists.items()
+        ]
+
+        return jsonify(response), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

@@ -5,6 +5,7 @@ class Message {
   final String message;
   final String timestamp;
   final bool isRead;
+  final String senderpicture;
 
   Message({
     required this.messageId,
@@ -13,6 +14,7 @@ class Message {
     required this.message,
     required this.timestamp,
     required this.isRead,
+    required this.senderpicture
   });
 
   // JSON'dan Message nesnesine dönüştürme
@@ -24,6 +26,7 @@ class Message {
       message: json['message'] ?? '',
       timestamp: json['timestamp'] ?? '',
       isRead: json['is_read'].toString().toLowerCase() == 'true',
+      senderpicture: json['sender_picture'] ?? '',
     );
   }
   static int compareByTimestamp(Message a, Message b) {

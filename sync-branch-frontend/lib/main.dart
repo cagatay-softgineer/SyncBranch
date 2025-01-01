@@ -3,6 +3,7 @@ import 'package:syncbranch/login_pages/google_page.dart';
 import 'package:syncbranch/login_pages/spotify_page.dart';
 import 'package:syncbranch/profiles/match_page.dart';
 import 'splash_screen.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'sign_up.dart';
 import 'terms_and_conditions_page.dart';
 import 'package:syncbranch/login_pages/login_page.dart';

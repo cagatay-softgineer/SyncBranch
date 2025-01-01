@@ -71,10 +71,9 @@ class _MatchPageState extends State<MatchPage> {
       final basicAuthHeader = BasicAuthService.getBasicAuthHeader();
 
       final response = await _dio.post(
-        '/api/query',
+        '/database/get_top5_matches',
         data: {
-          "query":
-              "SELECT top 5 * FROM GetAllMatches('$spotifyId') ORDER BY final_match_rate_percentage DESC;",
+          "user_id": "$spotifyId",
           "db_name": "primary",
         },
         options: Options(headers: {
@@ -91,6 +90,16 @@ class _MatchPageState extends State<MatchPage> {
       print("Error fetching top matches: $e");
     }
   }
+  Color getMatchRateColor(double matchRate) {
+  if (matchRate >= 80) {
+    return Colors.green; // High match
+  } else if (matchRate >= 50) {
+    return Colors.orange; // Medium match
+  } else {
+    return Colors.red; // Low match
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +152,7 @@ class _MatchPageState extends State<MatchPage> {
                         child: Swiper(
                           itemCount: topMatches.length,
                           layout: SwiperLayout.TINDER,
-                          itemWidth: MediaQuery.of(context).size.width * 0.9,
+                          itemWidth: MediaQuery.of(context).size.width * 1.1,
                           itemHeight: MediaQuery.of(context).size.height * 0.7,
                           itemBuilder: (BuildContext context, int index) {
                             final match = topMatches[index];
@@ -155,6 +164,7 @@ class _MatchPageState extends State<MatchPage> {
                                     builder: (context) => OtherProfilePage(
                                       userId: match['match_user_id'],
                                       displayName: match['match_user_name'],
+                                      username: match['matched_username'] ?? "Not Registered",
                                     ),
                                   ),
                                 );
@@ -162,11 +172,11 @@ class _MatchPageState extends State<MatchPage> {
                               child: Container(
                                 margin: const EdgeInsets.all(8.0),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Colors.transparent,
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
+                                      color: Colors.black.withOpacity(0.3),
                                       blurRadius: 10,
                                       offset: const Offset(0, 5),
                                     ),
@@ -192,23 +202,34 @@ class _MatchPageState extends State<MatchPage> {
                                       ),
                                       // Gradient arka plan ve kullanıcı bilgileri
                                       Container(
-                                        padding: const EdgeInsets.all(20),
+                                        padding: const EdgeInsets.all(10),
+                                        alignment: Alignment.bottomCenter,
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             colors: [
-                                              Colors.black.withOpacity(0.7),
+                                              Colors.black.withOpacity(1),
                                               Colors.transparent,
                                             ],
                                             begin: Alignment.bottomCenter,
-                                            end: Alignment.topCenter,
+                                            end: Alignment.center,
                                           ),
+                                          backgroundBlendMode: BlendMode.multiply,
+                                          boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
                                         ),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Text(
+                                            Align(
+  alignment: Alignment.center,
+  child: Text(
                                               match['match_user_name'] ??
                                                   'Unknown',
                                               style: const TextStyle(
@@ -218,15 +239,27 @@ class _MatchPageState extends State<MatchPage> {
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                            const SizedBox(height: 5),
-                                            Text(
-                                              '${match['final_match_rate_percentage']}% Match',
-                                              style: const TextStyle(
-                                                fontFamily: 'Montserrat',
-                                                color: Colors.white70,
-                                                fontSize: 16,
-                                              ),
                                             ),
+                                            const SizedBox(height: 5),
+
+  Align(
+  alignment: Alignment.center,
+  child: buildProfileFieldPersonalType(match['match_user_type']),
+                                            ),
+
+                                            const SizedBox(height: 5),
+Align(
+  alignment: Alignment.center,
+  child: Text(
+    '${match['final_match_rate_percentage']}% Match',
+    textAlign: TextAlign.center,
+    style: TextStyle(
+      fontFamily: 'Montserrat',
+      color: getMatchRateColor(match['final_match_rate_percentage']),
+      fontSize: 16,
+    ),
+  ),
+),
                                           ],
                                         ),
                                       ),
@@ -245,4 +278,54 @@ class _MatchPageState extends State<MatchPage> {
       ),
     );
   }
+}
+
+
+final Map<String, Color> personalTypeColors = {
+  "Ambient Live Listener": Colors.lightBlue,
+  "Ambient Minimalist": Colors.teal,
+  "Balanced Pop Listener": Colors.purple,
+  "Calm and Acoustic": Colors.green,
+  "Cheerful Studio Enthusiast": Colors.orange,
+  "Dance Enthusiast": Colors.pink,
+  "Diverse Music Explorer": Colors.cyan,
+  "Energetic Listener": Colors.red,
+  "Engaged Podcast Listener": Colors.brown,
+  "Fast-Paced Fan": Colors.amber,
+  "Heavy and Intense": Colors.deepPurple,
+  "High-Energy Electronic Fan": Colors.indigo,
+  "High-Octane Music Lover": Colors.deepOrange,
+  "Instrumental Lover": Colors.blueGrey,
+  "Live Performance Enthusiast": Colors.lime,
+  "Melancholic and Deep": Colors.grey,
+  "Mellow and Relaxed": Colors.lightGreen,
+  "Party Enthusiast": Colors.yellow,
+  "Peaceful Acoustic Listener": Colors.lightBlueAccent,
+  "Podcast and Rap Lover": Colors.blueAccent,
+  "Quiet and Thoughtful": Colors.indigoAccent,
+  "Reflective and Mellow": Colors.cyanAccent,
+  "Relaxing Instrumental Lover": Colors.pinkAccent,
+  "Silent and Serene": Colors.white,
+  "Soft and Calm Listener": Colors.lightGreenAccent,
+  "Soothing and Slow": Colors.tealAccent,
+  "Speech-Oriented Listener": Colors.orangeAccent,
+  "Speedy and Dance-Oriented": Colors.purpleAccent,
+  "Upbeat and Loud": Colors.redAccent,
+  "Upbeat Yet Relaxed": Colors.yellowAccent,
+  "Uplifting and Happy": Colors.greenAccent,
+};
+
+Widget buildProfileFieldPersonalType(String? value) {
+  // Get the color for the personal type, or default to white if not found
+  final color = personalTypeColors[value] ?? const Color.fromRGBO(225, 225, 225, 1);
+
+  return Text(
+    '${value ?? "Loading..."}',
+    style: TextStyle(
+      fontFamily: 'Montserrat',
+      fontSize: 18,
+      fontWeight: FontWeight.bold,
+      color: color,
+    ),
+  );
 }

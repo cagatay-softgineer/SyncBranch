@@ -24,7 +24,7 @@ class ChatServices {
         },
       ),
     );
-    print('Fetched messages: ${response.data}');
+    //print('Fetched messages: ${response.data}');
     if (response.statusCode == 200) {
       //print('Fetched messages: ${response.data}');
       final List data = response.data;

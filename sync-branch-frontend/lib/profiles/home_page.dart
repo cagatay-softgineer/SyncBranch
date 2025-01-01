@@ -106,20 +106,22 @@ class _HomePageState extends State<HomePage> {
               children: [
                 const SizedBox(height: 20),
                 const Text(
-                  'Home',
+                  'HOME',
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.w900,
                     color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 10),
                 // Profile Section
+                
                 CircleAvatar(
-                  radius: 60,
+                  radius: 100,
                   backgroundColor: Colors.green,
                   child: CircleAvatar(
-                    radius: 55,
+                    radius: 95,
                     backgroundImage: NetworkImage("$profile_picture"), // Profil resmi
                   ),
                 ),
@@ -154,23 +156,30 @@ class _HomePageState extends State<HomePage> {
                               margin: const EdgeInsets.symmetric(
                                   vertical: 8, horizontal: 16),
                               child: ListTile(
-                                leading: Image.network(
-                                   song['images'],
-                                   width: 40,
-                                   height: 40,
-                                   fit: BoxFit.cover,
-                                 ),
+                                leading: song['images'] != null && song['images'].isNotEmpty
+    ? Image.network(
+        song['images'],
+        width: 40,
+        height: 40,
+        fit: BoxFit.cover,
+      )
+    : Icon(
+        Icons.music_note, // Fallback icon or widget
+        size: 40,
+      ),
                                 title: Text(
                                   song['track_name'] ?? 'Unknown Song',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
+                                    fontFamily: 'Montserrat',
                                   ),
                                 ),
                                 subtitle: Text(
                                   song['artist_name'] ?? 'Unknown Artist',
                                   style: const TextStyle(
                                     color: Colors.white70,
+                                    fontFamily: 'Montserrat',
                                   ),
                                 ),
                               ),

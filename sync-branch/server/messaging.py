@@ -35,7 +35,8 @@ def retrieve_messages():
            usr_receiver.username AS receiver, 
            msg.sent_at, 
            msg.is_read, 
-           msg.message_id
+           msg.message_id,
+           usr_sender.profile_picture
     FROM messages msg
     JOIN users usr_sender ON usr_sender.user_id = msg.sender_id
     JOIN users usr_receiver ON usr_receiver.user_id = msg.receiver_id
@@ -61,6 +62,7 @@ def retrieve_messages():
             "timestamp": message[3].isoformat() if message[3] else None,  # Convert datetime to ISO string
             "is_read": f"{message[4]}",
             "message_id": f"{message[5]}",
+            "sender_picture": f"{message[6]}",
         }
         serialized_messages.append(serialized_message)
 

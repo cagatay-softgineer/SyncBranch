@@ -21,6 +21,11 @@ dependencies:
   permission_handler: ^10.4.3
   card_swiper: ^2.0.4
   url_launcher: ^6.1.6
+  intl: ^0.18.0
+  flutter_inappwebview: ^6.1.5
+  webview_flutter: ^4.2.2
+  flutter_html: ^3.0.0-beta.2
+  
 
 dev_dependencies:
   flutter_test:
